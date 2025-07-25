@@ -116,6 +116,9 @@ module cv32e40p_load_store_unit #(
   logic [31:0] rdata_q;
 
   ///////////////////////////////// BE generation ////////////////////////////////
+  //data_type_ex_i 区分 Word (32-bit)、Halfword (16-bit)、Byte (8-bit) 访问
+  //misaligned_st 标记是否跨对齐边界，决定是否需要拆分访问
+  //data_addr_int[1:0]（地址最低两位）控制具体哪些字节使能 (data_be)
   always_comb begin
     case (data_type_ex_i)  // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin  // Writing a word

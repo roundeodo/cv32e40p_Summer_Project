@@ -138,7 +138,7 @@ module cv32e40p_register_file #(
   genvar gidx;
   generate
     for (gidx = 1; gidx < NUM_TOT_WORDS; gidx++) begin : gen_we_decoder
-      assign waddr_onehot_a[gidx] = (we_a_i == 1'b1) && (waddr_a == gidx);
+      assign  [gidx] = (we_a_i == 1'b1) && (waddr_a == gidx);
       assign waddr_onehot_b[gidx] = (we_b_i == 1'b1) && (waddr_b == gidx);
     end
   endgenerate

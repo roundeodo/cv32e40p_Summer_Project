@@ -15,8 +15,8 @@ module cv32e40p_tb_subsystem #(
     parameter INSTR_RDATA_WIDTH = 32,
     parameter RAM_ADDR_WIDTH = 20,
     parameter BOOT_ADDR = 'h180,
-    parameter PULP_XPULP = 0,
-    parameter PULP_CLUSTER = 0,
+    parameter COREV_PULP = 0,
+    parameter COREV_CLUSTER = 0,
     parameter FPU = 0,
     parameter FPU_ADDMUL_LAT = 0,
     parameter FPU_OTHERS_LAT = 0,
@@ -71,8 +71,8 @@ module cv32e40p_tb_subsystem #(
 
   // instantiate the core
   cv32e40p_top #(
-      .PULP_XPULP      (PULP_XPULP),
-      .PULP_CLUSTER    (PULP_CLUSTER),
+      .COREV_PULP      (COREV_PULP),
+      .COREV_CLUSTER    (COREV_CLUSTER),
       .FPU             (FPU),
       .FPU_ADDMUL_LAT  (FPU_ADDMUL_LAT),
       .FPU_OTHERS_LAT  (FPU_OTHERS_LAT),

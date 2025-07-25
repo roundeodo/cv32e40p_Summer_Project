@@ -262,7 +262,9 @@ module cv32e40p_alu
 
   // right shifts, we let the synthesizer optimize this
   logic [63:0] shift_op_a_32;
-
+  
+  // 若是循环右移（ALU_ROR），则把数据拼接两份，便于 >> 实现环绕
+  // 否则做符号扩展（Arithmetic Shift）: 若 shift_arithmetic 且 MSB=1，则高 32 位填充 1
   assign shift_op_a_32 = (operator_i == ALU_ROR) ? {
         shift_op_a, shift_op_a
       } : $signed(
@@ -433,11 +435,15 @@ module cv32e40p_alu
   logic        do_min;
   logic [31:0] minmax_b;
 
+  //特殊的 ABS（Absolute Value）指令：operand_b_i 被替换成 adder_result（即 0 - A），这样最小/最大逻辑即可返回 |A|。
   assign minmax_b = (operator_i == ALU_ABS) ? adder_result : operand_b_i;
 
   assign do_min   = (operator_i == ALU_MIN)  || (operator_i == ALU_MINU) ||
                     (operator_i == ALU_CLIP) || (operator_i == ALU_CLIPU);
 
+
+  // sel_minmax[i] = is_greater[i] XOR do_min
+  // 如果 do_min=0 (max)，sel= is_greater；如果 do_min=1 (min)，sel= ~is_greater
   assign sel_minmax[3:0] = is_greater ^ {4{do_min}};
 
   assign result_minmax[31:24] = (sel_minmax[3] == 1'b1) ? operand_a_i[31:24] : minmax_b[31:24];
@@ -453,6 +459,8 @@ module cv32e40p_alu
   always_comb begin
     clip_result = result_minmax;
     if (operator_i == ALU_CLIPU) begin
+    // 无符号裁剪: 输出范围 [0, +B]
+    // 当 A<0 (operand_a_i[31]=1) 或 A==0 (is_equal_clip=1) 时，钳制到 0
       if (operand_a_i[31] || is_equal_clip) begin
         clip_result = '0;
       end else begin
@@ -460,6 +468,9 @@ module cv32e40p_alu
       end
     end else begin
       //CLIP
+      // 有符号裁剪: 输出范围 [–B, +B]
+      // 当 |A|>B (adder_result_expanded[36]=溢出) 或 |A|==B (is_equal_clip) 时，钳制到 –B
+
       if (adder_result_expanded[36] || is_equal_clip) begin
         clip_result = operand_b_neg;
       end else begin
@@ -751,9 +762,11 @@ module cv32e40p_alu
 
     case (operator_i)
       ALU_FF1: ff_input = operand_a_i;
-
+      
+      //用于将被除数/除数量级对齐
       ALU_DIVU, ALU_REMU, ALU_FL1: ff_input = operand_a_rev;
-
+      
+      //对于有符号数除法/取余，要按绝对值对齐
       ALU_DIV, ALU_REM, ALU_CLB: begin
         if (operand_a_i[31]) ff_input = operand_a_neg_rev;
         else ff_input = operand_a_rev;

@@ -82,7 +82,7 @@ module cv32e40p_register_file #(
   logic [NUM_TOT_WORDS-1:0]                 we_a_dec;
   logic [NUM_TOT_WORDS-1:0]                 we_b_dec;
 
-
+  //这里 ADDR_WIDTH = 5 按说一共五位就够了啊
   //-----------------------------------------------------------------------------
   //-- READ : Read address decoder RAD
   //-----------------------------------------------------------------------------

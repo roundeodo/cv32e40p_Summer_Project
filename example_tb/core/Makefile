@@ -24,20 +24,20 @@
 MAKE			= make
 
 # vsim configuration
-VVERSION                = "10.7b"
+VVERSION                = ""
 
-VLIB			= vlib-$(VVERSION)
+VLIB			= vlib
 VWORK			= work
 
-VLOG			= vlog-$(VVERSION)
+VLOG			= vlog
 VLOG_FLAGS		= -pedanticerrors -suppress 2577 -suppress 2583 -define CV32E40P_TRACE_EXECUTION
 VLOG_LOG                = vloggy
 
-VOPT			= vopt-$(VVERSION)
+VOPT			= vopt
 VOPT_FLAGS		= -debugdb -fsmdebug -pedanticerrors +acc #=mnprft
 
-VSIM			= vsim-$(VVERSION)
-VSIM_HOME               = /usr/pack/modelsim-$(VVERSION)-kgf/questasim
+VSIM			= vsim
+VSIM_HOME               = /usr/pack/modelsim-kgf/questasim
 VSIM_FLAGS              =  # user defined
 ALL_VSIM_FLAGS		= $(VSIM_FLAGS)
 VSIM_DEBUG_FLAGS	= -debugdb
