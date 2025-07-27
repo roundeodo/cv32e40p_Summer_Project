@@ -64,7 +64,7 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(RTLSRC_TB_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 # riscv toolchain install path
-RISCV                    ?= ~/.riscv
+RISCV                    = /home/ICer/riscv
 RISCV_EXE_PREFIX         = $(RISCV)/bin/riscv32-unknown-elf-
 
 # assume vsim if no target chosen
@@ -118,7 +118,7 @@ vsim-all-fp: check_fpnew_deps .opt-rtl-fp
 vsim-all-pulp: .opt-rtl-pulp
 
 .opt-rtl-pulp: .build-rtl
-	$(VOPT) -work $(VWORK) $(VOPT_FLAGS) -g PULP_XPULP=1 $(RTLSRC_VLOG_TB_TOP) -o \
+	$(VOPT) -work $(VWORK) $(VOPT_FLAGS) -g COREV_PULP=1 $(RTLSRC_VLOG_TB_TOP) -o \
 	$(RTLSRC_VOPT_TB_TOP)
 	touch .opt-rtl-pulp
 
@@ -175,7 +175,7 @@ vsim-run-gui-fp: vsim-all-fp
 .PHONY: vsim-run-pulp
 vsim-run-pulp: ALL_VSIM_FLAGS += -c
 vsim-run-pulp: vsim-all-pulp
-	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GPULP_XPULP=1 \
+	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GCOREV_PULP=1 \
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 
@@ -183,7 +183,7 @@ vsim-run-pulp: vsim-all-pulp
 .PHONY: vsim-run-gui-pulp
 vsim-run-gui-pulp: ALL_VSIM_FLAGS += $(VSIM_GUI_FLAGS)
 vsim-run-gui-pulp: vsim-all-pulp
-	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GPULP_XPULP=1 \
+	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GCOREV_PULP=1 \
 	$(RTLSRC_VOPT_TB_TOP) -do $(VSIM_SCRIPT)
 
 .PHONY: tb-clean-fp
