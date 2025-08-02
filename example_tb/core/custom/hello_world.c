@@ -16,6 +16,22 @@
  * Author: Robert Balas <balasr@iis.ee.ethz.ch>
  */
 
+// #include <stdio.h>
+// #include <stdlib.h>
+
+// #include "mem_stall.h"
+
+// int main(int argc, char *argv[])
+// {
+// #ifdef RANDOM_MEM_STALL
+//     activate_random_stall();
+// #endif
+//     /* write something to stdout */
+//     printf("hello world!\n");
+//     return EXIT_SUCCESS;
+// }
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,9 +40,19 @@
 int main(int argc, char *argv[])
 {
 #ifdef RANDOM_MEM_STALL
-    activate_random_stall();
+    activate_random_stall(); // 启用 memory stall（可选）
 #endif
-    /* write something to stdout */
-    printf("hello world!\n");
+    register int sum asm("t0");
+    asm volatile (
+        "li t0,0\n"
+        "li t1,0\n"
+        "1: add t0, t0, t1\n"
+        "   addi t1, t1, 1\n"
+        "   div t3,t0,t1\n"
+        "   li t2,11\n"
+        "   blt t1, t2, 1b\n"
+        : "=r"(sum)
+    );
+    printf("%d\n", sum);
     return EXIT_SUCCESS;
 }
