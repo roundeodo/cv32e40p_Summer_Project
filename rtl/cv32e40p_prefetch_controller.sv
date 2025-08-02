@@ -189,7 +189,7 @@ module cv32e40p_prefetch_controller #(
         // Replay previous branch target address (trans_addr_q) or new branch address (this can
         // occur if for example an interrupt is taken right after a taken jump which did not
         // yet have its target address accepted by the bus interface adapter.
-        trans_addr_o = branch_i ? aligned_branch_addr : trans_addr_q;
+        trans_addr_o = branch_i ? aligned_branch_addr : trans_addr_q;//if there is a even newer one, take it
         if (trans_valid_o && trans_ready_i) begin
           // Transaction with branch target address has been accepted. Start regular prefetch again.
           next_state = IDLE;
