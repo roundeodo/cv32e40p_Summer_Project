@@ -215,11 +215,18 @@ custom/hello_world.elf: custom/hello_world.c
 		-I mem_stall \
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
+
+custom/hello_world.s: custom/hello_world.c
+	$(RISCV_EXE_PREFIX)gcc -S -march=rv32imc -Os -nostdlib \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-I mem_stall \
+		-o $@ $<
+
 custom-clean:
 	rm -rf custom/hello_world.elf custom/hello_world.hex
 
 .PHONY: custom-vsim-run
-custom-vsim-run: vsim-all custom/hello_world.hex
+custom-vsim-run: vsim-all custom/hello_world.hex custom/hello_world.s
 custom-vsim-run: ALL_VSIM_FLAGS += "+firmware=custom/hello_world.hex"
 custom-vsim-run: vsim-run
 

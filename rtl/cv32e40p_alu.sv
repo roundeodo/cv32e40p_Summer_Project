@@ -994,6 +994,6 @@ module cv32e40p_alu
     endcase
   end
 
-  assign ready_o = div_ready;
-
+  // assign ready_o = div_ready;
+  assign ready_o = div_ready | (~div_valid);
 endmodule
