@@ -139,7 +139,7 @@ module cv32e40p_ex_stage
     input logic [31:0] csr_rdata_i,
 
     // Output of EX stage pipeline
-    output logic [ 5:0] regfile_waddr_wb_o,
+    output logic [ 5:0] regfile_waddr_wb_o,    //this 
     output logic        regfile_we_wb_o,
     output logic        regfile_we_wb_power_o,
     output logic [31:0] regfile_wdata_wb_o,

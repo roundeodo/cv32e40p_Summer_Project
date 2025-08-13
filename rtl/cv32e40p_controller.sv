@@ -42,7 +42,7 @@ module cv32e40p_controller import cv32e40p_pkg::*;
   input  logic        fetch_enable_i,             // Start the decoding
   output logic        ctrl_busy_o,                // Core is busy processing instructions
   output logic        is_decoding_o,              // Core is in decoding state
-  input  logic        is_fetch_failed_i,
+  input  logic        is_fetch_failed_i,          // From IF stage 
 
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
@@ -320,7 +320,7 @@ module cv32e40p_controller import cv32e40p_pkg::*;
     hwlp_mask_o             = 1'b0;
 
     hwlp_dec_cnt_o          = '0;
-    hwlp_end_4_id_d         = 1'b0;
+    hwlp_end_4_id_d         = 1'b0;     //
 
     // When the controller tells to hwlp-jump, the prefetcher does not always jump immediately,
     // but the aligner immediately modifies pc_id to HWLP_BEGIN. This condition on hwlp_targ_addr_o

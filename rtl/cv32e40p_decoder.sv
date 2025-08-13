@@ -78,7 +78,7 @@ module cv32e40p_decoder
 
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
-  input  logic        illegal_c_insn_i,        // compressed instruction decode failed
+  input  logic        illegal_c_insn_i,        // compressed instruction decode failed, from IF stage
 
   // ALU signals
   output logic        alu_en_o,                // ALU enable
@@ -108,6 +108,7 @@ module cv32e40p_decoder
   // FPU
   input  logic            fs_off_i, // Floating-Point State field from MSTATUS
   input  logic [C_RM-1:0] frm_i,    // Rounding mode from float CSR
+                                    // frm_o = (FPU == 1) ? frm_q : '0;
 
   output logic [cv32e40p_fpu_pkg::FP_FORMAT_BITS-1:0]  fpu_dst_fmt_o,   // fpu destination format
   output logic [cv32e40p_fpu_pkg::FP_FORMAT_BITS-1:0]  fpu_src_fmt_o,   // fpu source format
