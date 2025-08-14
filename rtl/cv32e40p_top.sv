@@ -97,7 +97,7 @@ module cv32e40p_top #(
   logic apu_clk_en, apu_clk;
 
   // Instantiate the Core
-  cv32e40p_core_modify #(
+  cv32e40p_core #(
       .COREV_PULP      (COREV_PULP),
       .COREV_CLUSTER   (COREV_CLUSTER),
       .FPU             (FPU),

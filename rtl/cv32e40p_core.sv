@@ -367,6 +367,56 @@ module cv32e40p_core
   // APU master signals
   assign apu_flags_o = apu_flags_ex;
 
+
+
+    logic               alu_en_is;
+  alu_opcode_e        alu_operator_is;
+  logic [31:0]        alu_operand_a_is, alu_operand_b_is, alu_operand_c_is;
+  logic [4:0]         bmask_a_is, bmask_b_is;
+  logic [1:0]         imm_vec_ext_is, alu_vec_mode_is, alu_clpx_shift_is;
+  logic               alu_is_clpx_is, alu_is_subrot_is;
+
+  // MUL（乘法器 / Multiplier）
+  mul_opcode_e        mult_operator_is;
+  logic [31:0]        mult_operand_a_is, mult_operand_b_is, mult_operand_c_is;
+  logic               mult_en_is, mult_sel_subword_is;
+  logic [1:0]         mult_signed_mode_is, mult_dot_signed_is, mult_clpx_shift_is;
+  logic [4:0]         mult_imm_is;
+  logic [31:0]        mult_dot_op_a_is, mult_dot_op_b_is, mult_dot_op_c_is;
+  logic               mult_is_clpx_is, mult_clpx_img_is;
+
+  // LSU（存储单元 / Load-Store Unit）侧带
+  logic               data_req_is, data_we_is;
+  logic [1:0]         data_type_is, data_sign_ext_is, data_reg_offset_is;
+  logic               data_load_event_is, data_misaligned_is;
+  logic [1:0] ctrl_transfer_insn_in_dec_is;  // 控制转移指令（如 jal, jalr, bxx）
+  // APU（加速/协处理单元 / Accelerator/APU）
+  logic                              apu_en_is;
+  logic [APU_WOP_CPU-1:0]            apu_op_is;
+  logic [1:0]                        apu_lat_is;
+  logic [APU_NARGS_CPU-1:0][31:0]    apu_operands_is;
+  logic [5:0]                        apu_waddr_is;
+  logic [APU_NUSFLAGS_CPU-1:0]       apu_flags_is;
+  logic [2:0][5:0]                   apu_read_regs_is;
+  logic [2:0]                        apu_read_regs_valid_is;
+  logic [1:0][5:0]                   apu_write_regs_is;
+  logic [1:0]                        apu_write_regs_valid_is;
+
+  // 分支/写回/CSR（控制状态寄存器 / Control & Status Registers）
+  logic              branch_in_is;
+  logic [5:0]        regfile_alu_waddr_is, regfile_waddr_is;
+  logic              regfile_alu_we_is,    regfile_we_is;
+  logic              csr_access_is;
+  logic [31:0]       csr_rdata_ex;   // ISSUE->EX 的CSR读数据
+
+  // is_decoding（正在译码标志 / is-decoding flag）对齐
+  logic is_decoding_is;              // ISSUE->EX 后的对齐版本
+
+  // （可选）握手观测
+  logic id2is_valid, is2ex_valid;
+
+
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   //   ____ _            _      __  __                                                   _    //
   //  / ___| | ___   ___| | __ |  \/  | __ _ _ __   __ _  __ _  ___ _ __ ___   ___ _ __ | |_  //
@@ -544,10 +594,10 @@ module cv32e40p_core
       .instr_req_o  (instr_req_int),
 
       // Jumps and branches
-      .branch_in_ex_o             (branch_in_ex),
+      .branch_in_ex_o             (branch_in_is),
       .branch_decision_i          (branch_decision),
       .jump_target_o              (jump_target_id),
-      .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec),
+      .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec_is),
 
       // IF and ID control signals
       .clear_instr_valid_o(clear_instr_valid),
@@ -590,54 +640,54 @@ module cv32e40p_core
       .alu_is_subrot_ex_o (alu_is_subrot_ex),
       .alu_clpx_shift_ex_o(alu_clpx_shift_ex),
 
-      .regfile_waddr_ex_o(regfile_waddr_ex),
-      .regfile_we_ex_o   (regfile_we_ex),
+      .regfile_waddr_ex_o(regfile_waddr_is),
+      .regfile_we_ex_o   (regfile_we_is),
 
-      .regfile_alu_we_ex_o   (regfile_alu_we_ex),
-      .regfile_alu_waddr_ex_o(regfile_alu_waddr_ex),
+      .regfile_alu_we_ex_o   (regfile_alu_we_is),
+      .regfile_alu_waddr_ex_o(regfile_alu_waddr_is),
 
       // MUL
-      .mult_operator_ex_o   (mult_operator_ex),  // from ID to EX stage
-      .mult_en_ex_o         (mult_en_ex),  // from ID to EX stage
-      .mult_sel_subword_ex_o(mult_sel_subword_ex),  // from ID to EX stage
-      .mult_signed_mode_ex_o(mult_signed_mode_ex),  // from ID to EX stage
-      .mult_operand_a_ex_o  (mult_operand_a_ex),  // from ID to EX stage
-      .mult_operand_b_ex_o  (mult_operand_b_ex),  // from ID to EX stage
-      .mult_operand_c_ex_o  (mult_operand_c_ex),  // from ID to EX stage
-      .mult_imm_ex_o        (mult_imm_ex),  // from ID to EX stage
+      .mult_operator_ex_o   (mult_operator_is),  // from ID to EX stage
+      .mult_en_ex_o         (mult_en_is),  // from ID to EX stage
+      .mult_sel_subword_ex_o(mult_sel_subword_is),  // from ID to EX stage
+      .mult_signed_mode_ex_o(mult_signed_mode_is),  // from ID to EX stage
+      .mult_operand_a_ex_o  (mult_operand_a_is),  // from ID to EX stage
+      .mult_operand_b_ex_o  (mult_operand_b_is),  // from ID to EX stage
+      .mult_operand_c_ex_o  (mult_operand_c_is),  // from ID to EX stage
+      .mult_imm_ex_o        (mult_imm_is),  // from ID to EX stage
 
-      .mult_dot_op_a_ex_o  (mult_dot_op_a_ex),  // from ID to EX stage
-      .mult_dot_op_b_ex_o  (mult_dot_op_b_ex),  // from ID to EX stage
-      .mult_dot_op_c_ex_o  (mult_dot_op_c_ex),  // from ID to EX stage
-      .mult_dot_signed_ex_o(mult_dot_signed_ex),  // from ID to EX stage
-      .mult_is_clpx_ex_o   (mult_is_clpx_ex),  // from ID to EX stage
-      .mult_clpx_shift_ex_o(mult_clpx_shift_ex),  // from ID to EX stage
-      .mult_clpx_img_ex_o  (mult_clpx_img_ex),  // from ID to EX stage
+      .mult_dot_op_a_ex_o  (mult_dot_op_a_is),  // from ID to EX stage
+      .mult_dot_op_b_ex_o  (mult_dot_op_b_is),  // from ID to EX stage
+      .mult_dot_op_c_ex_o  (mult_dot_op_c_is),  // from ID to EX stage
+      .mult_dot_signed_ex_o(mult_dot_signed_is),  // from ID to EX stage
+      .mult_is_clpx_ex_o   (mult_is_clpx_is),  // from ID to EX stage
+      .mult_clpx_shift_ex_o(mult_clpx_shift_is),  // from ID to EX stage
+      .mult_clpx_img_ex_o  (mult_clpx_img_is),  // from ID to EX stage
 
       // FPU
       .fs_off_i(fs_off),
       .frm_i   (frm_csr),
 
       // APU
-      .apu_en_ex_o      (apu_en_ex),
-      .apu_op_ex_o      (apu_op_ex),
-      .apu_lat_ex_o     (apu_lat_ex),
-      .apu_operands_ex_o(apu_operands_ex),
-      .apu_flags_ex_o   (apu_flags_ex),
-      .apu_waddr_ex_o   (apu_waddr_ex),
+      .apu_en_ex_o      (apu_en_is),
+      .apu_op_ex_o      (apu_op_is),
+      .apu_lat_ex_o     (apu_lat_is),
+      .apu_operands_ex_o(apu_operands_is),
+      .apu_flags_ex_o   (apu_flags_is),
+      .apu_waddr_ex_o   (apu_waddr_is),
 
-      .apu_read_regs_o        (apu_read_regs),
-      .apu_read_regs_valid_o  (apu_read_regs_valid),
+      .apu_read_regs_o        (apu_read_regs_is),
+      .apu_read_regs_valid_o  (apu_read_regs_valid_is),
       .apu_read_dep_i         (apu_read_dep),
       .apu_read_dep_for_jalr_i(apu_read_dep_for_jalr),
-      .apu_write_regs_o       (apu_write_regs),
-      .apu_write_regs_valid_o (apu_write_regs_valid),
+      .apu_write_regs_o       (apu_write_regs_is),
+      .apu_write_regs_valid_o (apu_write_regs_valid_is),
       .apu_write_dep_i        (apu_write_dep),
       .apu_perf_dep_o         (perf_apu_dep),
       .apu_busy_i             (apu_busy_o),
 
       // CSR ID/EX
-      .csr_access_ex_o      (csr_access_ex),
+      .csr_access_ex_o      (csr_access_is),
       .csr_op_ex_o          (csr_op_ex),
       .current_priv_lvl_i   (current_priv_lvl),
       .csr_irq_sec_o        (csr_irq_sec),
@@ -661,7 +711,7 @@ module cv32e40p_core
       .hwlp_target_o(hwlp_target),
 
       // LSU
-      .data_req_ex_o       (data_req_ex),  // to load store unit
+      .data_req_ex_o       (data_req_is),  // to load store unit
       .data_we_ex_o        (data_we_ex),  // to load store unit
       .atop_ex_o           (data_atop_ex),
       .data_type_ex_o      (data_type_ex),  // to load store unit
@@ -669,7 +719,7 @@ module cv32e40p_core
       .data_reg_offset_ex_o(data_reg_offset_ex),  // to load store unit
       .data_load_event_ex_o(data_load_event_ex),  // to load store unit
 
-      .data_misaligned_ex_o(data_misaligned_ex),  // to load store unit
+      .data_misaligned_ex_o(data_misaligned_is),  // to load store unit
 
       .prepost_useincr_ex_o(useincr_addr_ex),
       .data_misaligned_i   (data_misaligned),
@@ -734,6 +784,215 @@ module cv32e40p_core
       .mcounteren_i(mcounteren)
   );
 
+  ////////////////////////////////////////////////////////
+  //  _____  _____    _____ _______       _____ ______  //
+  // |_   _|/ ____|  / ____|__   __|/\   / ____|  ____| //
+  //   | | | (___   | (___    | |  /  \ | |  __| |__    //
+  //   | |  \___ \   \___ \   | | / /\ \| | |_ |  __|   //
+  //  _| |_ ____) |  ____) |  | |/ ____ \ |__| | |____  //
+  // |_____|_____/  |_____/   |_/_/    \_\_____|______| //
+  //                                                    //
+  ////////////////////////////////////////////////////////
+    // ===== ID -> ISSUE wires (打给 issue 的信号) =====
+  // ALU（算术逻辑单元 / Arithmetic Logic Unit）
+  // logic               alu_en_is;
+  // alu_opcode_e        alu_operator_is;
+  // logic [31:0]        alu_operand_a_is, alu_operand_b_is, alu_operand_c_is;
+  // logic [4:0]         bmask_a_is, bmask_b_is;
+  // logic [1:0]         imm_vec_ext_is, alu_vec_mode_is, alu_clpx_shift_is;
+  // logic               alu_is_clpx_is, alu_is_subrot_is;
+
+  // // MUL（乘法器 / Multiplier）
+  // mul_opcode_e        mult_operator_is;
+  // logic [31:0]        mult_operand_a_is, mult_operand_b_is, mult_operand_c_is;
+  // logic               mult_en_is, mult_sel_subword_is;
+  // logic [1:0]         mult_signed_mode_is, mult_dot_signed_is, mult_clpx_shift_is;
+  // logic [4:0]         mult_imm_is;
+  // logic [31:0]        mult_dot_op_a_is, mult_dot_op_b_is, mult_dot_op_c_is;
+  // logic               mult_is_clpx_is, mult_clpx_img_is;
+
+  // // LSU（存储单元 / Load-Store Unit）侧带
+  // logic               data_req_is, data_we_is;
+  // logic [1:0]         data_type_is, data_sign_ext_is, data_reg_offset_is;
+  // logic               data_load_event_is, data_misaligned_is;
+  // logic [1:0] ctrl_transfer_insn_in_dec_is;  // 控制转移指令（如 jal, jalr, bxx）
+  // // APU（加速/协处理单元 / Accelerator/APU）
+  // logic                              apu_en_is;
+  // logic [APU_WOP_CPU-1:0]            apu_op_is;
+  // logic [1:0]                        apu_lat_is;
+  // logic [APU_NARGS_CPU-1:0][31:0]    apu_operands_is;
+  // logic [5:0]                        apu_waddr_is;
+  // logic [APU_NUSFLAGS_CPU-1:0]       apu_flags_is;
+  // logic [2:0][5:0]                   apu_read_regs_is;
+  // logic [2:0]                        apu_read_regs_valid_is;
+  // logic [1:0][5:0]                   apu_write_regs_is;
+  // logic [1:0]                        apu_write_regs_valid_is;
+
+  // // 分支/写回/CSR（控制状态寄存器 / Control & Status Registers）
+  // logic              branch_in_is;
+  // logic [5:0]        regfile_alu_waddr_is, regfile_waddr_is;
+  // logic              regfile_alu_we_is,    regfile_we_is;
+  // logic              csr_access_is;
+  // logic [31:0]       csr_rdata_ex;   // ISSUE->EX 的CSR读数据
+
+  // // is_decoding（正在译码标志 / is-decoding flag）对齐
+  // logic is_decoding_is;              // ISSUE->EX 后的对齐版本
+
+  // // （可选）握手观测
+  // logic id2is_valid, is2ex_valid;
+
+  // logic        data_req_is;
+
+    cv32e40p_issue_stage #(
+      .COREV_PULP      (COREV_PULP),
+      .COREV_CLUSTER   (COREV_CLUSTER),
+      .N_HWLP          (N_HWLP),
+      .PULP_SECURE     (PULP_SECURE),
+      .USE_PMP         (USE_PMP),
+      .A_EXTENSION     (A_EXTENSION),
+      .APU             (APU),
+      .FPU             (FPU),
+      .FPU_ADDMUL_LAT  (FPU_ADDMUL_LAT),
+      .FPU_OTHERS_LAT  (FPU_OTHERS_LAT),
+      .ZFINX           (ZFINX),
+      .APU_NARGS_CPU   (APU_NARGS_CPU),
+      .APU_WOP_CPU     (APU_WOP_CPU),
+      .APU_NDSFLAGS_CPU(APU_NDSFLAGS_CPU),
+      .APU_NUSFLAGS_CPU(APU_NUSFLAGS_CPU),
+      .DEBUG_TRIGGER_EN(DEBUG_TRIGGER_EN)
+  ) issue_stage_i (
+      .clk            (clk),
+      .clk_ungated_i  (clk_i),
+      .rst_n          (rst_ni),
+
+      // 简单观测（当前 issue 没有 ready 端口）
+      .id2is_valid_i  (id_valid),
+      .is2ex_valid_o  (is2ex_valid),
+
+      // ========== ALU ==========
+      .alu_operator_i   (alu_operator_is),
+      .alu_operand_a_i  (alu_operand_a_is),
+      .alu_operand_b_i  (alu_operand_b_is),
+      .alu_operand_c_i  (alu_operand_c_is),
+      .alu_en_i         (alu_en_is),
+      .bmask_a_i        (bmask_a_is),
+      .bmask_b_i        (bmask_b_is),
+      .imm_vec_ext_i    (imm_vec_ext_is),
+      .alu_vec_mode_i   (alu_vec_mode_is),
+      .alu_is_clpx_i    (alu_is_clpx_is),
+      .alu_is_subrot_i  (alu_is_subrot_is),
+      .alu_clpx_shift_i (alu_clpx_shift_is),
+
+      .alu_operand_a_o  (alu_operand_a_ex),
+      .alu_operand_b_o  (alu_operand_b_ex),
+      .alu_operand_c_o  (alu_operand_c_ex),
+      .alu_operator_o   (alu_operator_ex),
+      .alu_en_o         (alu_en_ex),
+      .bmask_a_o        (bmask_a_ex),
+      .bmask_b_o        (bmask_b_ex),
+      .imm_vec_ext_o    (imm_vec_ext_ex),
+      .alu_vec_mode_o   (alu_vec_mode_ex),
+      .alu_is_clpx_o    (alu_is_clpx_ex),
+      .alu_is_subrot_o  (alu_is_subrot_ex),
+      .alu_clpx_shift_o (alu_clpx_shift_ex),
+
+      // ========== LSU ==========
+
+      .data_misaligned_ex_i (data_misaligned_is),
+
+
+      .data_misaligned_ex_o (data_misaligned_ex),
+
+      .ctrl_transfer_insn_in_dec_i(ctrl_transfer_insn_in_dec_is),
+      .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec),
+
+      // ========== MUL ==========
+      .mult_operator_i    (mult_operator_is),
+      .mult_operand_a_i   (mult_operand_a_is),
+      .mult_operand_b_i   (mult_operand_b_is),
+      .mult_operand_c_i   (mult_operand_c_is),
+      .mult_en_i          (mult_en_is),
+      .mult_sel_subword_i (mult_sel_subword_is),
+      .mult_signed_mode_i (mult_signed_mode_is),
+      .mult_imm_i         (mult_imm_is),
+
+      .mult_dot_op_a_i    (mult_dot_op_a_is),
+      .mult_dot_op_b_i    (mult_dot_op_b_is),
+      .mult_dot_op_c_i    (mult_dot_op_c_is),
+      .mult_dot_signed_i  (mult_dot_signed_is),
+      .mult_is_clpx_i     (mult_is_clpx_is),
+      .mult_clpx_shift_i  (mult_clpx_shift_is),
+      .mult_clpx_img_i    (mult_clpx_img_is),
+
+      .mult_operand_a_o   (mult_operand_a_ex),
+      .mult_operand_b_o   (mult_operand_b_ex),
+      .mult_operand_c_o   (mult_operand_c_ex),
+      .mult_operator_o    (mult_operator_ex),
+      .mult_en_o          (mult_en_ex),
+      .mult_sel_subword_o (mult_sel_subword_ex),
+      .mult_signed_mode_o (mult_signed_mode_ex),
+      .mult_imm_o         (mult_imm_ex),
+
+      .mult_dot_op_a_o    (mult_dot_op_a_ex),
+      .mult_dot_op_b_o    (mult_dot_op_b_ex),
+      .mult_dot_op_c_o    (mult_dot_op_c_ex),
+      .mult_dot_signed_o  (mult_dot_signed_ex),
+      .mult_is_clpx_o     (mult_is_clpx_ex),
+      .mult_clpx_shift_o  (mult_clpx_shift_ex),
+      .mult_clpx_img_o    (mult_clpx_img_ex),
+
+      // ========== APU ==========
+      .apu_en_i            (apu_en_is),
+      .apu_op_i            (apu_op_is),
+      .apu_lat_i           (apu_lat_is),
+      .apu_operands_i      (apu_operands_is),
+      .apu_waddr_i         (apu_waddr_is),
+      //.apu_flags_i         (apu_flags_is),
+
+      .apu_read_regs_i     (apu_read_regs_is),
+      .apu_read_regs_valid_i(apu_read_regs_valid_is),
+      .apu_write_regs_i    (apu_write_regs_is),
+      .apu_write_regs_valid_i(apu_write_regs_valid_is),
+
+      .apu_en_o            (apu_en_ex),
+      .apu_op_o            (apu_op_ex),
+      .apu_lat_o           (apu_lat_ex),
+      .apu_operands_o      (apu_operands_ex),
+      .apu_waddr_o         (apu_waddr_ex),
+      //.apu_flags_o         (apu_flags_ex),
+
+      .apu_read_regs_o     (apu_read_regs),
+      .apu_read_regs_valid_o(apu_read_regs_valid),
+      .apu_write_regs_o    (apu_write_regs),
+      .apu_write_regs_valid_o(apu_write_regs_valid),
+
+      // ========== Regfile/Branch ==========
+      .branch_in_is_i      (branch_in_is),
+      .regfile_alu_waddr_i (regfile_alu_waddr_is),
+      .regfile_alu_we_i    (regfile_alu_we_is),
+      .regfile_we_i        (regfile_we_is),
+      .regfile_waddr_i     (regfile_waddr_is),
+
+      .branch_in_is_o      (branch_in_ex),
+      .regfile_alu_waddr_o (regfile_alu_waddr_ex),
+      .regfile_alu_we_o    (regfile_alu_we_ex),
+      .regfile_we_o        (regfile_we_ex),
+      .regfile_waddr_o     (regfile_waddr_ex),
+
+      // ========== CSR ==========
+      .csr_access_i        (csr_access_is),
+
+      .csr_access_o        (csr_access_ex),
+
+      .data_req_is_i       (data_req_is),
+      .data_req_is_o       (data_req_ex),
+
+
+      // ========== is_decoding ==========
+      .is_decoding_i       (),
+      .is_decoding_o       ()
+  );
+
 
   /////////////////////////////////////////////////////
   //   _______  __  ____ _____  _    ____ _____      //
@@ -756,18 +1015,18 @@ module cv32e40p_core
       .rst_n(rst_ni),
 
       // Alu signals from ID stage
-      .alu_en_i        (alu_en_ex),
-      .alu_operator_i  (alu_operator_ex),  // from ID/EX pipe registers
-      .alu_operand_a_i (alu_operand_a_ex),  // from ID/EX pipe registers
-      .alu_operand_b_i (alu_operand_b_ex),  // from ID/EX pipe registers
-      .alu_operand_c_i (alu_operand_c_ex),  // from ID/EX pipe registers
-      .bmask_a_i       (bmask_a_ex),  // from ID/EX pipe registers
-      .bmask_b_i       (bmask_b_ex),  // from ID/EX pipe registers
-      .imm_vec_ext_i   (imm_vec_ext_ex),  // from ID/EX pipe registers
-      .alu_vec_mode_i  (alu_vec_mode_ex),  // from ID/EX pipe registers
-      .alu_is_clpx_i   (alu_is_clpx_ex),  // from ID/EX pipe registers
-      .alu_is_subrot_i (alu_is_subrot_ex),  // from ID/Ex pipe registers
-      .alu_clpx_shift_i(alu_clpx_shift_ex),  // from ID/EX pipe registers
+      .alu_en_i        (alu_en_is),
+      .alu_operator_i  (alu_operator_is),  // from ID/EX pipe registers
+      .alu_operand_a_i (alu_operand_a_is),  // from ID/EX pipe registers
+      .alu_operand_b_i (alu_operand_b_is),  // from ID/EX pipe registers
+      .alu_operand_c_i (alu_operand_c_is),  // from ID/EX pipe registers
+      .bmask_a_i       (bmask_a_is),  // from ID/EX pipe registers
+      .bmask_b_i       (bmask_b_is),  // from ID/EX pipe registers
+      .imm_vec_ext_i   (imm_vec_ext_is),  // from ID/EX pipe registers
+      .alu_vec_mode_i  (alu_vec_mode_is),  // from ID/EX pipe registers
+      .alu_is_clpx_i   (alu_is_clpx_is),  // from ID/EX pipe registers
+      .alu_is_subrot_i (alu_is_subrot_is),  // from ID/Ex pipe registers
+      .alu_clpx_shift_i(alu_clpx_shift_is),  // from ID/EX pipe registers
 
       // Multipler
       .mult_operator_i   (mult_operator_ex),  // from ID/EX pipe registers

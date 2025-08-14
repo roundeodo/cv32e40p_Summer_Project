@@ -10,7 +10,7 @@ cModel Technology
 Z0 d/mnt/hgfs/25Summer/riscv/cv32e40p_Summer_Project/example_tb/core
 vamo_shim
 Z1 DXx6 sv_std 3 std 0 22 d=_JfHTnXCN[H5FjiaJJc0
-Z2 !s110 1754151788
+Z2 !s110 1755209308
 !i10b 1
 !s100 KcWL9R6][8MUk1J9BjTXj0
 I2:A`QCd>G>PXjT]NM:2N81
@@ -26,16 +26,16 @@ Z6 OL;L;10.7c;67
 r1
 !s85 0
 31
-Z7 !s108 1754151787.000000
-Z8 !s107 ../../rtl/../bhv/cv32e40p_instr_trace.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|../../rtl/../bhv/cv32e40p_tracer.sv|mm_ram.sv|amo_shim.sv|riscv_gnt_stall.sv|riscv_rvalid_stall.sv|cv32e40p_tb_subsystem.sv|tb_top.sv|dp_ram.sv|cv32e40p_random_interrupt_generator.sv|include/perturbation_pkg.sv|../../rtl/../bhv/cv32e40p_tb_wrapper.sv|../../rtl/../bhv/include/cv32e40p_tracer_pkg.sv|../../rtl/../bhv/cv32e40p_sim_clock_gate.sv|../../rtl/cv32e40p_top.sv|../../rtl/cv32e40p_core.sv|../../rtl/cv32e40p_sleep_unit.sv|../../rtl/cv32e40p_prefetch_controller.sv|../../rtl/cv32e40p_obi_interface.sv|../../rtl/cv32e40p_controller.sv|../../rtl/cv32e40p_apu_disp.sv|../../rtl/cv32e40p_popcnt.sv|../../rtl/cv32e40p_ff_one.sv|../../rtl/cv32e40p_alu.sv|../../rtl/cv32e40p_alu_div.sv|../../rtl/cv32e40p_ex_stage.sv|../../rtl/cv32e40p_int_controller.sv|../../rtl/cv32e40p_mult.sv|../../rtl/cv32e40p_hwloop_regs.sv|../../rtl/cv32e40p_prefetch_buffer.sv|../../rtl/cv32e40p_fifo.sv|../../rtl/cv32e40p_compressed_decoder.sv|../../rtl/cv32e40p_decoder.sv|../../rtl/cv32e40p_aligner.sv|../../rtl/cv32e40p_id_stage.sv|../../rtl/cv32e40p_load_store_unit.sv|../../rtl/cv32e40p_register_file_ff.sv|../../rtl/cv32e40p_cs_registers.sv|../../rtl/cv32e40p_if_stage.sv|../../rtl/include/cv32e40p_pkg.sv|../../rtl/include/cv32e40p_fpu_pkg.sv|../../rtl/include/cv32e40p_apu_core_pkg.sv|
-Z9 !s90 -work|work|-pedanticerrors|-suppress|2577|-suppress|2583|-define|CV32E40P_TRACE_EXECUTION|-f|../../cv32e40p_manifest.flist|include/perturbation_pkg.sv|cv32e40p_random_interrupt_generator.sv|dp_ram.sv|tb_top.sv|cv32e40p_tb_subsystem.sv|riscv_rvalid_stall.sv|riscv_gnt_stall.sv|amo_shim.sv|mm_ram.sv|
+Z7 !s108 1755209307.000000
+Z8 !s107 ../../rtl/../bhv/cv32e40p_instr_trace.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|/home/mentor/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|../../rtl/../bhv/cv32e40p_tracer.sv|mm_ram.sv|amo_shim.sv|riscv_rvalid_stall.sv|riscv_gnt_stall.sv|cv32e40p_tb_subsystem.sv|tb_top.sv|dp_ram.sv|cv32e40p_random_interrupt_generator.sv|include/perturbation_pkg.sv|../../rtl/../bhv/cv32e40p_tb_wrapper.sv|../../rtl/../bhv/include/cv32e40p_tracer_pkg.sv|../../rtl/../bhv/cv32e40p_sim_clock_gate.sv|../../rtl/cv32e40p_top.sv|../../rtl/cv32e40p_core.sv|../../rtl/cv32e40p_sleep_unit.sv|../../rtl/cv32e40p_prefetch_controller.sv|../../rtl/cv32e40p_obi_interface.sv|../../rtl/cv32e40p_controller.sv|../../rtl/cv32e40p_apu_disp.sv|../../rtl/cv32e40p_popcnt.sv|../../rtl/cv32e40p_ff_one.sv|../../rtl/cv32e40p_alu.sv|../../rtl/cv32e40p_alu_div.sv|../../rtl/cv32e40p_ex_stage.sv|../../rtl/cv32e40p_issue_stage.sv|../../rtl/cv32e40p_int_controller.sv|../../rtl/cv32e40p_mult.sv|../../rtl/cv32e40p_hwloop_regs.sv|../../rtl/cv32e40p_prefetch_buffer.sv|../../rtl/cv32e40p_fifo.sv|../../rtl/cv32e40p_compressed_decoder.sv|../../rtl/cv32e40p_decoder.sv|../../rtl/cv32e40p_aligner.sv|../../rtl/cv32e40p_id_stage.sv|../../rtl/cv32e40p_load_store_unit.sv|../../rtl/cv32e40p_register_file_ff.sv|../../rtl/cv32e40p_cs_registers.sv|../../rtl/cv32e40p_if_stage.sv|../../rtl/include/cv32e40p_pkg.sv|../../rtl/include/cv32e40p_fpu_pkg.sv|../../rtl/include/cv32e40p_apu_core_pkg.sv|
+Z9 !s90 -work|work|-pedanticerrors|-suppress|2577|-suppress|2583|-define|CV32E40P_TRACE_EXECUTION|-f|../../cv32e40p_manifest.flist|include/perturbation_pkg.sv|cv32e40p_random_interrupt_generator.sv|dp_ram.sv|tb_top.sv|cv32e40p_tb_subsystem.sv|riscv_gnt_stall.sv|riscv_rvalid_stall.sv|amo_shim.sv|mm_ram.sv|
 !i113 0
 Z10 o-suppress 2577 -suppress 2583 -work work -pedanticerrors -define CV32E40P_TRACE_EXECUTION -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
 Z11 !s92 -suppress 2577 -suppress 2583 -work work -pedanticerrors -define CV32E40P_TRACE_EXECUTION +incdir+../../rtl/include +incdir+../../rtl/../bhv +incdir+../../rtl/../bhv/include +incdir+../../rtl/../sva -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
 Z12 tCvgOpt 0
 vcv32e40p_aligner
 R1
-Z13 !s110 1754151787
+Z13 !s110 1755209307
 !i10b 1
 !s100 4l^77>Ak696Ab1HJc2i9c0
 Il;HBWWmiKJG0HAe;;GSiV2
@@ -63,16 +63,16 @@ R1
 Z15 DXx4 work 12 cv32e40p_pkg 0 22 CQBhIj<3:RW:Ij2Bi<4P31
 R13
 !i10b 1
-!s100 V[5n@LHmmimX>X]Lkg6Lh2
-IVC?b]`o7j?4In03czCTFn2
+!s100 R>QQ@DN5;f0giA7UEZecO3
+IUjV@h1L0kZnXAin4Nfn213
 R3
 !s105 cv32e40p_alu_sv_unit
 S1
 R0
-w1754151779
+Z16 w1755115787
 8../../rtl/cv32e40p_alu.sv
 F../../rtl/cv32e40p_alu.sv
-Z16 L0 28
+Z17 L0 28
 R6
 r1
 !s85 0
@@ -97,7 +97,7 @@ R0
 R4
 8../../rtl/cv32e40p_alu_div.sv
 F../../rtl/cv32e40p_alu_div.sv
-Z17 L0 26
+Z18 L0 26
 R6
 r1
 !s85 0
@@ -146,7 +146,7 @@ R0
 R4
 8../../rtl/cv32e40p_apu_disp.sv
 F../../rtl/cv32e40p_apu_disp.sv
-Z18 L0 25
+Z19 L0 25
 R6
 r1
 !s85 0
@@ -197,7 +197,7 @@ R0
 R4
 8../../rtl/cv32e40p_compressed_decoder.sv
 F../../rtl/cv32e40p_compressed_decoder.sv
-Z19 L0 27
+Z20 L0 27
 R6
 r1
 !s85 0
@@ -220,10 +220,10 @@ R3
 !s105 cv32e40p_controller_sv_unit
 S1
 R0
-R4
+R16
 8../../rtl/cv32e40p_controller.sv
 F../../rtl/cv32e40p_controller.sv
-Z20 L0 31
+Z21 L0 31
 R6
 r1
 !s85 0
@@ -237,20 +237,20 @@ R11
 R12
 vcv32e40p_core
 R1
-Z21 DXx4 work 21 cv32e40p_apu_core_pkg 0 22 aoZHajaRH>Vz`Lm0:j<<Z2
+Z22 DXx4 work 21 cv32e40p_apu_core_pkg 0 22 aoZHajaRH>Vz`Lm0:j<<Z2
 R15
 R13
 !i10b 1
-!s100 :0lnf8V_^0lZzJJ5>0cM=1
-I87HmLP_C5Y@<Z_m?2l8iX0
+!s100 ^_>Y:FoG2K@EJFjEIif6z3
+I<FlFb2aWb9O<KkQ8MlXAY3
 R3
 !s105 cv32e40p_core_sv_unit
 S1
 R0
-R4
+w1755204028
 8../../rtl/cv32e40p_core.sv
 F../../rtl/cv32e40p_core.sv
-R20
+R21
 R6
 r1
 !s85 0
@@ -276,7 +276,7 @@ R0
 R4
 8../../rtl/cv32e40p_cs_registers.sv
 F../../rtl/cv32e40p_cs_registers.sv
-Z22 L0 30
+Z23 L0 30
 R6
 r1
 !s85 0
@@ -291,20 +291,20 @@ R12
 vcv32e40p_decoder
 R1
 R15
-R21
-Z23 DXx4 work 16 cv32e40p_fpu_pkg 0 22 GZ4d0<MaEPjzY8n1o;mD_2
+R22
+Z24 DXx4 work 16 cv32e40p_fpu_pkg 0 22 GZ4d0<MaEPjzY8n1o;mD_2
 R13
 !i10b 1
-!s100 LOAF<ZnRUKhK2[L_:]V690
-II:ibNAHiAkYnQWjA4dAic2
+!s100 BT;H@2@U?:@BOj:H4kWl?0
+IOcOYg9VCP0;DL_QM;o7ZH0
 R3
 !s105 cv32e40p_decoder_sv_unit
 S1
 R0
-R4
+R16
 8../../rtl/cv32e40p_decoder.sv
 F../../rtl/cv32e40p_decoder.sv
-R16
+R17
 R6
 r1
 !s85 0
@@ -319,7 +319,7 @@ R12
 vcv32e40p_ex_stage
 R1
 R15
-R21
+R22
 R13
 !i10b 1
 !s100 IKG9G[fZh84P;Y>1@5iO?0
@@ -328,7 +328,7 @@ R3
 !s105 cv32e40p_ex_stage_sv_unit
 S1
 R0
-w1754137892
+R16
 8../../rtl/cv32e40p_ex_stage.sv
 F../../rtl/cv32e40p_ex_stage.sv
 L0 32
@@ -356,7 +356,7 @@ R0
 R4
 8../../rtl/cv32e40p_ff_one.sv
 F../../rtl/cv32e40p_ff_one.sv
-R18
+R19
 R6
 r1
 !s85 0
@@ -405,7 +405,7 @@ R0
 R4
 8../../rtl/include/cv32e40p_fpu_pkg.sv
 F../../rtl/include/cv32e40p_fpu_pkg.sv
-Z24 L0 38
+Z25 L0 38
 R6
 r1
 !s85 0
@@ -430,7 +430,7 @@ R0
 R4
 8../../rtl/cv32e40p_hwloop_regs.sv
 F../../rtl/cv32e40p_hwloop_regs.sv
-R18
+R19
 R6
 r1
 !s85 0
@@ -445,20 +445,20 @@ R12
 vcv32e40p_id_stage
 R1
 R15
-R21
-R23
+R22
+R24
 R13
 !i10b 1
-!s100 Hm`N6jM>c^?7FbGQD3?I]0
-ILTmNZPW:47amHMlW3N_^J0
+!s100 AnejV>aRM@ezkfI[>7EYD3
+IhM>3OGEJA:JD>LTYleZlT3
 R3
 !s105 cv32e40p_id_stage_sv_unit
 S1
 R0
-R4
+R16
 8../../rtl/cv32e40p_id_stage.sv
 F../../rtl/cv32e40p_id_stage.sv
-R22
+R23
 R6
 r1
 !s85 0
@@ -484,7 +484,7 @@ R0
 R4
 8../../rtl/cv32e40p_if_stage.sv
 F../../rtl/cv32e40p_if_stage.sv
-R16
+R17
 R6
 r1
 !s85 0
@@ -522,6 +522,33 @@ R9
 R10
 R11
 R12
+vcv32e40p_issue_stage
+R1
+R15
+R22
+R13
+!i10b 1
+!s100 lI]Ka6Qn8U2?1LVIk0WVP0
+IC[8^ncP@K3l6dLCD9gFd?3
+R3
+!s105 cv32e40p_issue_stage_sv_unit
+S1
+R0
+w1755203923
+8../../rtl/cv32e40p_issue_stage.sv
+F../../rtl/cv32e40p_issue_stage.sv
+L0 9
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 0
+R10
+R11
+R12
 vcv32e40p_load_store_unit
 R1
 R13
@@ -532,10 +559,10 @@ R3
 !s105 cv32e40p_load_store_unit_sv_unit
 S1
 R0
-Z25 w1753379105
+Z26 w1753379105
 8../../rtl/cv32e40p_load_store_unit.sv
 F../../rtl/cv32e40p_load_store_unit.sv
-R17
+R18
 R6
 r1
 !s85 0
@@ -561,7 +588,7 @@ R0
 R4
 8../../rtl/cv32e40p_mult.sv
 F../../rtl/cv32e40p_mult.sv
-R17
+R18
 R6
 r1
 !s85 0
@@ -586,7 +613,7 @@ R0
 R4
 8../../rtl/cv32e40p_obi_interface.sv
 F../../rtl/cv32e40p_obi_interface.sv
-R24
+R25
 R6
 r1
 !s85 0
@@ -610,7 +637,7 @@ R0
 R4
 8../../rtl/include/cv32e40p_pkg.sv
 F../../rtl/include/cv32e40p_pkg.sv
-R17
+R18
 R6
 r1
 !s85 0
@@ -635,7 +662,7 @@ R0
 R4
 8../../rtl/cv32e40p_popcnt.sv
 F../../rtl/cv32e40p_popcnt.sv
-R18
+R19
 R6
 r1
 !s85 0
@@ -660,7 +687,7 @@ R0
 R4
 8../../rtl/cv32e40p_prefetch_buffer.sv
 F../../rtl/cv32e40p_prefetch_buffer.sv
-R19
+R20
 R6
 r1
 !s85 0
@@ -701,7 +728,7 @@ R12
 vcv32e40p_random_interrupt_generator
 R1
 R15
-Z26 DXx4 work 16 perturbation_pkg 0 22 `FZ`k7?D0NFc]:[[F707h3
+Z27 DXx4 work 16 perturbation_pkg 0 22 `FZ`k7?D0NFc]:[[F707h3
 R2
 !i10b 1
 !s100 7Ba14Z_9Dd_F@h>TT7G]C2
@@ -713,7 +740,7 @@ R0
 R4
 8cv32e40p_random_interrupt_generator.sv
 Fcv32e40p_random_interrupt_generator.sv
-R16
+R17
 R6
 r1
 !s85 0
@@ -735,10 +762,10 @@ R3
 !s105 cv32e40p_register_file_ff_sv_unit
 S1
 R0
-R25
+R26
 8../../rtl/cv32e40p_register_file_ff.sv
 F../../rtl/cv32e40p_register_file_ff.sv
-R22
+R23
 R6
 r1
 !s85 0
@@ -809,7 +836,7 @@ R2
 !s100 4d1`kSXW`OjJa_iYa@d2n3
 IUgI95d0D6L7okkgEoehiY2
 R3
-Z27 !s105 cv32e40p_tb_wrapper_sv_unit
+Z28 !s105 cv32e40p_tb_wrapper_sv_unit
 S1
 R0
 R4
@@ -829,7 +856,7 @@ R11
 R12
 vcv32e40p_top
 R1
-R21
+R22
 R13
 !i10b 1
 !s100 gXNNg0KVmeSab8^R8:NhK2
@@ -838,10 +865,10 @@ R3
 !s105 cv32e40p_top_sv_unit
 S1
 R0
-R4
+w1755203163
 8../../rtl/cv32e40p_top.sv
 F../../rtl/cv32e40p_top.sv
-R17
+R18
 R6
 r1
 !s85 0
@@ -863,7 +890,7 @@ R2
 !s100 CfdRh1AnZeBIh2h9F?OSH0
 Ic@k04[FL?><AT=SCH[AaK3
 R3
-R27
+R28
 S1
 R0
 R4
@@ -894,7 +921,7 @@ R0
 R4
 8../../rtl/../bhv/include/cv32e40p_tracer_pkg.sv
 F../../rtl/../bhv/include/cv32e40p_tracer_pkg.sv
-Z28 L0 12
+Z29 L0 12
 R6
 r1
 !s85 0
@@ -919,7 +946,7 @@ R0
 R4
 8dp_ram.sv
 Fdp_ram.sv
-R28
+R29
 R6
 r1
 !s85 0
@@ -983,7 +1010,7 @@ R12
 vriscv_gnt_stall
 R1
 R15
-R26
+R27
 R2
 !i10b 1
 !s100 @b[jC@iYTiE2N3M?[Xc4M2
@@ -995,7 +1022,7 @@ R0
 R4
 8riscv_gnt_stall.sv
 Friscv_gnt_stall.sv
-R22
+R23
 R6
 r1
 !s85 0
@@ -1009,7 +1036,7 @@ R11
 R12
 vriscv_rvalid_stall
 R1
-R26
+R27
 R2
 !i10b 1
 !s100 a@IB2WFYN@E@^nFk@U:IH0
@@ -1021,7 +1048,7 @@ R0
 R4
 8riscv_rvalid_stall.sv
 Friscv_rvalid_stall.sv
-R22
+R23
 R6
 r1
 !s85 0
@@ -1060,7 +1087,7 @@ R11
 R12
 Ttb_top_vopt
 R2
-VYLb[W<e[SkXdTAeG_]_Rl2
+VmhQbJ6SKa>_84ZfUBkf^z1
 04 6 4 work tb_top fast 0
 o-work work -debugdb -fsmdebug -pedanticerrors +acc
 R12

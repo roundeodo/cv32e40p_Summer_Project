@@ -175,7 +175,7 @@ module cv32e40p_issue_stage
       alu_operand_a_o <= 32'b0;
       alu_operand_b_o <= 32'b0;
       alu_operand_c_o <= 32'b0;
-      alu_operator_o <= ALU_NOP;
+      alu_operator_o <= ALU_SLTU;
       alu_en_o <= 1'b0;
       bmask_a_o <= 5'b0;
       bmask_b_o <= 5'b0;
@@ -194,7 +194,7 @@ module cv32e40p_issue_stage
       mult_operand_a_o <= 32'b0;
       mult_operand_b_o <= 32'b0;
       mult_operand_c_o <= 32'b0;
-      mult_operator_o <= MUL_NOP;
+      mult_operator_o <= MUL_I;
       mult_en_o <= 1'b0;
       mult_sel_subword_o <= 1'b0;
       mult_signed_mode_o <= 2'b0;
