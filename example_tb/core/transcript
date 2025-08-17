@@ -14,8 +14,8 @@
 # //  18 U.S.C. Section 1905.
 # //
 # vsim "+firmware=custom/hello_world.hex" -gui -debugdb tb_top_vopt -do "vsim.tcl" 
-# Start time: 06:08:36 on Aug 15,2025
-# Loading /tmp/ICer@IC_EDA_dpi_4423/linux_x86_64_gcc-5.3.0/export_tramp.so
+# Start time: 23:02:08 on Aug 15,2025
+# Loading /tmp/ICer@IC_EDA_dpi_77105/linux_x86_64_gcc-5.3.0/export_tramp.so
 # Loading sv_std.std
 # Loading work.tb_top(fast)
 # Loading work.cv32e40p_tb_subsystem(fast)
@@ -56,61 +56,55 @@
 # Loading work.riscv_gnt_stall(fast)
 # Loading work.cv32e40p_random_interrupt_generator(fast)
 # ** Warning: (vsim-3015) [PCDPC] - Port size (15) does not match connection size (5) for port 'apu_flags_ex_o'. The port definition is at: ../../rtl/cv32e40p_id_stage.sv(143).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/id_stage_i File: ../../rtl/cv32e40p_core.sv Line: 579
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_a_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_b_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_c_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operator_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_en_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/bmask_a_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/bmask_b_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/imm_vec_ext_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_vec_mode_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_is_clpx_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_is_subrot_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_clpx_shift_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(579).
-#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 863
-# Compiling /tmp/ICer@IC_EDA_dpi_4423/linux_x86_64_gcc-5.3.0/exportwrapper.c
-# Loading /tmp/ICer@IC_EDA_dpi_4423/linux_x86_64_gcc-5.3.0/vsim_auto_compile.so
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/id_stage_i File: ../../rtl/cv32e40p_core.sv Line: 580
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_a_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_b_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operand_c_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_operator_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_en_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/bmask_a_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/bmask_b_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/imm_vec_ext_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_vec_mode_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_is_clpx_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_is_subrot_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# ** Warning: (vsim-3839) Variable '/tb_top/wrapper_i/top_i/core_i/alu_clpx_shift_ex', driven via a port connection, is multiply driven. See ../../rtl/cv32e40p_core.sv(580).
+#    Time: 0 ns  Iteration: 0  Instance: /tb_top/wrapper_i/top_i/core_i/issue_stage_i File: ../../rtl/cv32e40p_core.sv Line: 864
+# Compiling /tmp/ICer@IC_EDA_dpi_77105/linux_x86_64_gcc-5.3.0/exportwrapper.c
+# Loading /tmp/ICer@IC_EDA_dpi_77105/linux_x86_64_gcc-5.3.0/vsim_auto_compile.so
 # ** Note: (vsim-8900) Creating design debug database vsim.dbg.
 # do vsim.tcl
 # 1
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
 #    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/load_store_unit_i/#ALWAYS#421 File: ../../rtl/cv32e40p_load_store_unit.sv Line: 422
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#783 File: ../../rtl/cv32e40p_id_stage.sv Line: 784
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#790 File: ../../rtl/cv32e40p_id_stage.sv Line: 791
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#768 File: ../../rtl/cv32e40p_id_stage.sv Line: 769
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#775 File: ../../rtl/cv32e40p_id_stage.sv Line: 776
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#762 File: ../../rtl/cv32e40p_id_stage.sv Line: 763
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#769 File: ../../rtl/cv32e40p_id_stage.sv Line: 770
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#753 File: ../../rtl/cv32e40p_id_stage.sv Line: 754
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#760 File: ../../rtl/cv32e40p_id_stage.sv Line: 761
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#747 File: ../../rtl/cv32e40p_id_stage.sv Line: 748
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#754 File: ../../rtl/cv32e40p_id_stage.sv Line: 755
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#608(immediate_a_mux) File: ../../rtl/cv32e40p_id_stage.sv Line: 609
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#615(immediate_a_mux) File: ../../rtl/cv32e40p_id_stage.sv Line: 616
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
-#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#523 File: ../../rtl/cv32e40p_id_stage.sv Line: 524
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#530 File: ../../rtl/cv32e40p_id_stage.sv Line: 531
 # ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
 #    Time: 0 ns  Iteration: 2  Process: /tb_top/wrapper_i/top_i/core_i/load_store_unit_i/#ALWAYS#421 File: ../../rtl/cv32e40p_load_store_unit.sv Line: 422
-# ** Warning: (vsim-PLI-8496) $fatal : Argument number 1 is invalid. Expecting 0, 1, or 2. Using default value of 1
-#    Time: 760 ns  Iteration: 6  Process: /tb_top/wrapper_i/ram_i/out_of_bounds_write/out_of_bounds_write File: mm_ram.sv Line: 367
-# ** Fatal: out of bounds write to b7690000 with 00000000
-#    Time: 760 ns Started: 760 ns  Scope: tb_top.wrapper_i.ram_i.out_of_bounds_write File: mm_ram.sv Line: 367
-# ** Note: $finish    : mm_ram.sv(367)
-#    Time: 760 ns  Iteration: 6  Instance: /tb_top/wrapper_i/ram_i/out_of_bounds_write
-# 1
-# Break in Module mm_ram at mm_ram.sv line 367
-# End time: 06:09:15 on Aug 15,2025, Elapsed time: 0:00:39
-# Errors: 1, Warnings: 23
+# Break key hit
+# Simulation stop requested.
+# End time: 23:03:06 on Aug 15,2025, Elapsed time: 0:00:58
+# Errors: 0, Warnings: 22

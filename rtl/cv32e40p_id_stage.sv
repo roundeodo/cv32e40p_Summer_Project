@@ -268,6 +268,13 @@ module cv32e40p_id_stage
 
   logic [31:0] instr;
 
+  logic [5:0] regfile_waddr_ex_o_q;    // Register file write address
+  logic       regfile_we_ex_o_q;
+  logic        branch_in_ex_o_q;
+  logic                              apu_en_ex_o_q;
+  logic [                 1:0]       apu_lat_ex_o_q;   
+  logic       data_req_ex_o_q;
+  logic       data_we_ex_o_q;
 
   // Decoder/Controller ID stage internal signals
   logic        deassert_we;
@@ -539,9 +546,9 @@ module cv32e40p_id_stage
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ? regfile_waddr_id : regfile_addr_ra_id;
 
   // Forwarding control signals
-  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o_q     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o_q     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o_q     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
   assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
@@ -554,7 +561,7 @@ module cv32e40p_id_stage
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id | branch_taken_ex;
 
-  assign branch_taken_ex = branch_in_ex_o && branch_decision_i;
+  assign branch_taken_ex = branch_in_ex_o_q && branch_decision_i;
 
 
   assign mult_en = mult_int_en | mult_dot_en;
@@ -916,7 +923,7 @@ module cv32e40p_id_stage
 
   assign apu_perf_dep_o = apu_stall;
   // stall when we access the CSR after a multicycle APU instruction
-  assign csr_apu_stall  = (csr_access & (apu_en_ex_o & (apu_lat_ex_o[1] == 1'b1) | apu_busy_i));
+  assign csr_apu_stall  = (csr_access & (apu_en_ex_o_q & (apu_lat_ex_o_q[1] == 1'b1) | apu_busy_i));
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -1171,8 +1178,8 @@ module cv32e40p_id_stage
       .hwlp_targ_addr_o(hwlp_target_o),
 
       // LSU
-      .data_req_ex_i    (data_req_ex_o),
-      .data_we_ex_i     (data_we_ex_o),
+      .data_req_ex_i    (data_req_ex_o_q),
+      .data_we_ex_i     (data_we_ex_o_q),
       .data_misaligned_i(data_misaligned_i),
       .data_load_event_i(data_load_event_id),
       .data_err_i       (data_err_i),
@@ -1239,8 +1246,8 @@ module cv32e40p_id_stage
       .regfile_alu_waddr_id_i(regfile_alu_waddr_id),
 
       // Forwarding signals from regfile
-      .regfile_we_ex_i   (regfile_we_ex_o),
-      .regfile_waddr_ex_i(regfile_waddr_ex_o),
+      .regfile_we_ex_i   (regfile_we_ex_o_q),
+      .regfile_waddr_ex_i(regfile_waddr_ex_o_q),
       .regfile_we_wb_i   (regfile_we_wb_i),
 
       // regfile port 2
@@ -1463,9 +1470,16 @@ module cv32e40p_id_stage
       apu_flags_ex_o         <= '0;
       apu_waddr_ex_o         <= '0;
 
+      apu_en_ex_o_q            <= '0;
+      apu_lat_ex_o_q           <= '0;
+
+
 
       regfile_waddr_ex_o     <= 6'b0;
       regfile_we_ex_o        <= 1'b0;
+
+      regfile_waddr_ex_o_q     <= 6'b0;
+      regfile_we_ex_o_q        <= 1'b0;
 
       regfile_alu_waddr_ex_o <= 6'b0;
       regfile_alu_we_ex_o    <= 1'b0;
@@ -1482,13 +1496,18 @@ module cv32e40p_id_stage
       data_load_event_ex_o   <= 1'b0;
       atop_ex_o              <= 5'b0;
 
+      data_req_ex_o_q          <= 1'b0;
+      data_we_ex_o_q           <= 1'b0;
+
       data_misaligned_ex_o   <= 1'b0;
 
       pc_ex_o                <= '0;
 
       branch_in_ex_o         <= 1'b0;
+      branch_in_ex_o_q         <= 1'b0;
 
     end else if (data_misaligned_i) begin
+
       // misaligned data access case
       if (ex_ready_i) begin  // misaligned access case, only unstall alu operands
 
@@ -1509,9 +1528,15 @@ module cv32e40p_id_stage
       mult_operand_c_ex_o <= operand_c_fw_id;
     end else begin
       // normal pipeline unstall case
-
-      if (id_valid_o) begin  // unstall the whole pipeline
         alu_en_ex_o <= alu_en;
+        regfile_we_ex_o_q <= regfile_we_ex_o;
+        regfile_waddr_ex_o_q <= regfile_waddr_ex_o;
+        branch_in_ex_o_q <= branch_in_ex_o;
+        apu_en_ex_o_q <= apu_en_ex_o;
+        apu_lat_ex_o_q <= apu_lat_ex_o;
+        data_req_ex_o_q          <= data_req_ex_o;
+        data_we_ex_o_q           <= data_we_ex_o;
+      if (id_valid_o) begin  // unstall the whole pipeline
         if (alu_en) begin
           alu_operator_ex_o  <= alu_operator;
           alu_operand_a_ex_o <= alu_operand_a;
@@ -1696,7 +1721,7 @@ module cv32e40p_id_stage
 
   // make sure that branch decision is valid when jumping
   a_br_decision :
-  assert property (@(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx))
+  assert property (@(posedge clk) (branch_in_ex_o_q) |-> (branch_decision_i !== 1'bx))
   else begin
     $warning("%t, Branch decision is X in module %m", $time);
     $stop;

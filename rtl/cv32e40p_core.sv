@@ -414,6 +414,7 @@ module cv32e40p_core
 
   // （可选）握手观测
   logic id2is_valid, is2ex_valid;
+  logic csr_save_is;
 
 
 
@@ -694,7 +695,7 @@ module cv32e40p_core
       .csr_cause_o          (csr_cause),
       .csr_save_if_o        (csr_save_if),  // control signal to save pc
       .csr_save_id_o        (csr_save_id),  // control signal to save pc
-      .csr_save_ex_o        (csr_save_ex),  // control signal to save pc
+      .csr_save_ex_o        (csr_save_is),  // control signal to save pc
       .csr_restore_mret_id_o(csr_restore_mret_id),  // control signal to restore pc
       .csr_restore_uret_id_o(csr_restore_uret_id),  // control signal to restore pc
 
@@ -947,7 +948,7 @@ module cv32e40p_core
       .apu_lat_i           (apu_lat_is),
       .apu_operands_i      (apu_operands_is),
       .apu_waddr_i         (apu_waddr_is),
-      //.apu_flags_i         (apu_flags_is),
+      .apu_flags_is_i         (apu_flags_is),
 
       .apu_read_regs_i     (apu_read_regs_is),
       .apu_read_regs_valid_i(apu_read_regs_valid_is),
@@ -959,7 +960,7 @@ module cv32e40p_core
       .apu_lat_o           (apu_lat_ex),
       .apu_operands_o      (apu_operands_ex),
       .apu_waddr_o         (apu_waddr_ex),
-      //.apu_flags_o         (apu_flags_ex),
+      .apu_flags_is_o         (apu_flags_ex),
 
       .apu_read_regs_o     (apu_read_regs),
       .apu_read_regs_valid_o(apu_read_regs_valid),
@@ -983,6 +984,8 @@ module cv32e40p_core
       .csr_access_i        (csr_access_is),
 
       .csr_access_o        (csr_access_ex),
+      .csr_save_i       (csr_save_is),  // control signal to save pc
+      .csr_save_o       (csr_save_ex),  // control signal to save pc
 
       .data_req_is_i       (data_req_is),
       .data_req_is_o       (data_req_ex),

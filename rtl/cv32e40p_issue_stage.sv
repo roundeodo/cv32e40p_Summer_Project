@@ -121,11 +121,13 @@ module cv32e40p_issue_stage
     input logic [                 1:0]       apu_lat_i,
     input logic [   APU_NARGS_CPU-1:0][31:0] apu_operands_i,
     input logic [                 5:0]       apu_waddr_i,
+    input logic [APU_NUSFLAGS_CPU-1:0]       apu_flags_is_i,
 
     input  logic [2:0][5:0] apu_read_regs_i,
     input  logic [2:0]      apu_read_regs_valid_i,
     input  logic [1:0][5:0] apu_write_regs_i,
     input  logic [1:0]      apu_write_regs_valid_i,
+    output logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_is_o,
 
     output logic                              apu_en_o,
     output logic [     APU_WOP_CPU-1:0]       apu_op_o,
@@ -159,10 +161,13 @@ module cv32e40p_issue_stage
 
     output logic        csr_access_o,
 
-
+    input logic csr_save_i,
+    output logic csr_save_o,
 
     input logic is_decoding_i,
     output logic is_decoding_o
+
+    
 
 
 
@@ -213,10 +218,13 @@ module cv32e40p_issue_stage
       apu_lat_o <= 'b0;
       apu_operands_o = 'b0; // Initialize to zero
       apu_waddr_o = 'b0; // Initialize to zero
+      apu_flags_is_o = 'b0; // Initialize to zero
+      apu_read_regs_o = 'b0; // Initialize to zero
+      apu_write_regs_o = 'b0; // Initialize to zero
 
       apu_read_regs_valid_o = 'b0; // Initialize to zero
       apu_write_regs_valid_o = 'b0; // Initialize to zero
-    end else begin
+    end else if (id2is_valid_i)begin
           alu_operand_a_o   <= alu_operand_a_i   ;
           alu_operand_b_o   <= alu_operand_b_i   ;
           alu_operand_c_o   <= alu_operand_c_i   ;
@@ -256,12 +264,14 @@ module cv32e40p_issue_stage
           apu_read_regs_valid_o <= apu_read_regs_valid_i;
           apu_write_regs_o  <= apu_write_regs_i  ;
           apu_write_regs_valid_o <= apu_write_regs_valid_i;
+          apu_flags_is_o    <= apu_flags_is_i    ;
           branch_in_is_o    <= branch_in_is_i    ;
           regfile_alu_waddr_o <= regfile_alu_waddr_i;
           regfile_alu_we_o  <= regfile_alu_we_i  ;
           regfile_we_o      <= regfile_we_i      ;
           regfile_waddr_o   <= regfile_waddr_i   ;
           csr_access_o      <= csr_access_i      ;
+          csr_save_o        <= csr_save_i        ;
           is_decoding_o     <= is_decoding_i     ;
         end 
     end
