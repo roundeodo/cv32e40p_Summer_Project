@@ -113,6 +113,7 @@ module cv32e40p_ex_stage
 
     // apu-interconnect
     // handshake signals
+    // input is from the core input
     output logic                           apu_req_o,
     input  logic                           apu_gnt_i,
     // request channel
@@ -123,7 +124,7 @@ module cv32e40p_ex_stage
     input  logic [             31:0]       apu_result_i,
 
     input logic        lsu_en_i,
-    input logic [31:0] lsu_rdata_i,
+    input logic [31:0] lsu_rdata_i,    //from LSU
 
     // input from ID stage
     input logic       branch_in_ex_i,

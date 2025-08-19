@@ -147,10 +147,14 @@ module cv32e40p_core
   logic [31:0] pc_if;  // Program counter in IF stage
   logic [31:0] pc_id;  // Program counter in ID stage
 
+  logic [31:0] pc_if_cs;  // Program counter in IF stage
+  logic [31:0] pc_id_cs;  // Program counter in ID stage
+
   // ID performance counter signals
   logic        is_decoding;
 
   logic        useincr_addr_ex;  // Active when post increment
+  logic        useincr_addr_ex_is;  // Active when post increment (flopped)
   logic        data_misaligned;
 
   logic        mult_multicycle;
@@ -158,15 +162,19 @@ module cv32e40p_core
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
   logic               branch_in_ex;
+  logic               branch_in_is;
   logic               branch_decision;
   logic        [ 1:0] ctrl_transfer_insn_in_dec;
+  logic        [ 1:0] ctrl_transfer_insn_in_dec_is;
+
 
   logic               ctrl_busy;
   logic               if_busy;
   logic               lsu_busy;
 
   logic        [31:0] pc_ex;  // PC of last executed branch or cv.elw
-
+  logic        [31:0] pc_ex_is;  // PC of last executed branch or cv.elw (flopped)
+  
   // ALU Control
   logic               alu_en_ex;
   alu_opcode_e        alu_operator_ex;
@@ -180,6 +188,18 @@ module cv32e40p_core
   logic alu_is_clpx_ex, alu_is_subrot_ex;
   logic        [                 1:0]       alu_clpx_shift_ex;
 
+
+  logic               alu_en_ex_is;
+  alu_opcode_e        alu_operator_ex_is;
+  logic        [31:0] alu_operand_a_ex_is;
+  logic        [31:0] alu_operand_b_ex_is;
+  logic        [31:0] alu_operand_c_ex_is;
+  logic        [ 4:0] bmask_a_ex_is;
+  logic        [ 4:0] bmask_b_ex_is;
+  logic        [ 1:0] imm_vec_ext_ex_is;
+  logic        [ 1:0] alu_vec_mode_ex_is;
+  logic alu_is_clpx_ex_is, alu_is_subrot_ex_is;
+  logic        [                 1:0]       alu_clpx_shift_ex_is;
   // Multiplier Control
   mul_opcode_e                              mult_operator_ex;
   logic        [                31:0]       mult_operand_a_ex;
@@ -196,6 +216,22 @@ module cv32e40p_core
   logic                                     mult_is_clpx_ex;
   logic        [                 1:0]       mult_clpx_shift_ex;
   logic                                     mult_clpx_img_ex;
+  
+  mul_opcode_e                              mult_operator_ex_is;
+  logic        [                31:0]       mult_operand_a_ex_is;
+  logic        [                31:0]       mult_operand_b_ex_is;
+  logic        [                31:0]       mult_operand_c_ex_is;
+  logic                                     mult_en_ex_is;
+  logic                                     mult_sel_subword_ex_is;
+  logic        [                 1:0]       mult_signed_mode_ex_is;
+  logic        [                 4:0]       mult_imm_ex_is;
+  logic        [                31:0]       mult_dot_op_a_ex_is;
+  logic        [                31:0]       mult_dot_op_b_ex_is;
+  logic        [                31:0]       mult_dot_op_c_ex_is;
+  logic        [                 1:0]       mult_dot_signed_ex_is;
+  logic                                     mult_is_clpx_ex_is;
+  logic        [                 1:0]       mult_clpx_shift_ex_is;
+  logic                                     mult_clpx_img_ex_is;
 
   // FPU
   logic                                     fs_off;
@@ -225,9 +261,26 @@ module cv32e40p_core
   logic                                     perf_apu_dep;
   logic                                     perf_apu_wb;
 
+  //to IS
+  logic                                     apu_en_ex_is;
+  // logic        [APU_NDSFLAGS_CPU-1:0]       apu_flags_ex;
+  logic        [     APU_WOP_CPU-1:0]       apu_op_ex_is;
+  logic        [                 1:0]       apu_lat_ex_is;
+  logic        [   APU_NARGS_CPU-1:0][31:0] apu_operands_ex_is;
+  logic        [                 5:0]       apu_waddr_ex_is;
+
+  logic        [                 2:0][ 5:0] apu_read_regs_is;
+  logic        [                 2:0]       apu_read_regs_valid_is; 
+  logic        [                 1:0][ 5:0] apu_write_regs_is;
+  logic        [                 1:0]       apu_write_regs_valid_is; 
+
+  logic                                     perf_apu_dep_is;
+
   // Register Write Control
   logic        [                 5:0]       regfile_waddr_ex;
   logic                                     regfile_we_ex;
+  logic        [                 5:0]       regfile_waddr_ex_is;
+  logic                                     regfile_we_ex_is;
   logic        [                 5:0]       regfile_waddr_fw_wb_o;  // From WB to ID
   logic                                     regfile_we_wb;
   logic                                     regfile_we_wb_power;
@@ -235,6 +288,8 @@ module cv32e40p_core
 
   logic        [                 5:0]       regfile_alu_waddr_ex;
   logic                                     regfile_alu_we_ex;
+  logic        [                 5:0]       regfile_alu_waddr_ex_is;
+  logic                                     regfile_alu_we_ex_is;
 
   logic        [                 5:0]       regfile_alu_waddr_fw;
   logic                                     regfile_alu_we_fw;
@@ -243,7 +298,9 @@ module cv32e40p_core
 
   // CSR control
   logic                                     csr_access_ex;
+  logic                                     csr_access_ex_is;
   csr_opcode_e                              csr_op_ex;
+  csr_opcode_e                              csr_op_ex_is;
   logic [23:0] mtvec, utvec;
   logic        [ 1:0] mtvec_mode;
   logic        [ 1:0] utvec_mode;
@@ -257,13 +314,22 @@ module cv32e40p_core
 
   // Data Memory Control:  From ID stage (id-ex pipe) <--> load store unit
   logic               data_we_ex;
+  logic               data_we_ex_is;
   logic        [ 5:0] data_atop_ex;
+  logic        [ 5:0] data_atop_ex_is;
   logic        [ 1:0] data_type_ex;
+  logic        [ 1:0] data_type_ex_is;
   logic        [ 1:0] data_sign_ext_ex;
   logic        [ 1:0] data_reg_offset_ex;
   logic               data_req_ex;
+  logic               data_req_ex_is;
   logic               data_load_event_ex;
   logic               data_misaligned_ex;
+
+  logic        [ 1:0] data_sign_ext_ex_is;
+  logic        [ 1:0] data_reg_offset_ex_is;
+  logic               data_load_event_ex_is;
+  logic               data_misaligned_ex_is;
 
   logic               p_elw_start;  // Start of cv.elw load (when data_req_o is sent)
   logic               p_elw_finish;  // Finish of cv.elw load (when data_rvalid_i is received)
@@ -290,19 +356,32 @@ module cv32e40p_core
   // Interrupts
   logic m_irq_enable, u_irq_enable;
   logic csr_irq_sec;
+  logic csr_irq_sec_is;
   logic [31:0] mepc, uepc, depc;
   logic [             31:0]       mie_bypass;
   logic [             31:0]       mip;
+  logic [             31:0]       mip_is;
 
   logic                           csr_save_cause;
+  logic                           csr_save_cause_is;
   logic                           csr_save_if;
   logic                           csr_save_id;
   logic                           csr_save_ex;
   logic [              5:0]       csr_cause;
+  logic [              5:0]       csr_cause_is;
   logic                           csr_restore_mret_id;
   logic                           csr_restore_uret_id;
   logic                           csr_restore_dret_id;
   logic                           csr_mtvec_init;
+  logic                           csr_mtvec_init_cs;
+
+  logic                           csr_restore_mret_id_is;
+  logic                           csr_restore_uret_id_is;
+  logic                           csr_restore_dret_id_is;
+
+  logic                           csr_save_if_is;
+  logic                           csr_save_id_is;
+  logic                           csr_save_ex_is;
 
   // HPM related control signals
   logic [             31:0]       mcounteren;
@@ -317,10 +396,18 @@ module cv32e40p_core
   logic                           trigger_match;
   logic                           debug_p_elw_no_sleep;
 
+  logic                           debug_mode_is;
+  logic [              2:0]       debug_cause_is;
+  logic                           debug_csr_save_is;
+
   // Hardware loop controller signals
   logic [       N_HWLP-1:0][31:0] hwlp_start;
   logic [       N_HWLP-1:0][31:0] hwlp_end;
   logic [       N_HWLP-1:0][31:0] hwlp_cnt;
+
+  logic [       N_HWLP-1:0][31:0] hwlp_start_is;
+  logic [       N_HWLP-1:0][31:0] hwlp_end_is;
+  logic [       N_HWLP-1:0][31:0] hwlp_cnt_is;
 
   logic [             31:0]       hwlp_target;
   logic                           hwlp_jump;
@@ -337,6 +424,18 @@ module cv32e40p_core
   logic                           mhpmevent_imiss;
   logic                           mhpmevent_ld_stall;
   logic                           mhpmevent_pipe_stall;
+
+  logic                           mhpmevent_minstret_is;
+  logic                           mhpmevent_load_is;
+  logic                           mhpmevent_store_is;
+  logic                           mhpmevent_jump_is;
+  logic                           mhpmevent_branch_is;
+  logic                           mhpmevent_branch_taken_is;
+  logic                           mhpmevent_compressed_is;
+  logic                           mhpmevent_jr_stall_is;
+  logic                           mhpmevent_imiss_is;
+  logic                           mhpmevent_ld_stall_is;
+  logic                           mhpmevent_pipe_stall_is;
 
   logic                           perf_imiss;
 
@@ -544,10 +643,10 @@ module cv32e40p_core
       .instr_req_o  (instr_req_int),
 
       // Jumps and branches
-      .branch_in_ex_o             (branch_in_ex),
+      .branch_in_ex_o             (branch_in_is),
       .branch_decision_i          (branch_decision),
       .jump_target_o              (jump_target_id),
-      .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec),
+      .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec_is),
 
       // IF and ID control signals
       .clear_instr_valid_o(clear_instr_valid),
@@ -575,101 +674,102 @@ module cv32e40p_core
       .ex_valid_i(ex_valid),
 
       // From the Pipeline ID/EX
-      .pc_ex_o(pc_ex),
+      .pc_ex_o(pc_ex_is),
 
-      .alu_en_ex_o        (alu_en_ex),
-      .alu_operator_ex_o  (alu_operator_ex),
-      .alu_operand_a_ex_o (alu_operand_a_ex),
-      .alu_operand_b_ex_o (alu_operand_b_ex),
-      .alu_operand_c_ex_o (alu_operand_c_ex),
-      .bmask_a_ex_o       (bmask_a_ex),
-      .bmask_b_ex_o       (bmask_b_ex),
-      .imm_vec_ext_ex_o   (imm_vec_ext_ex),
-      .alu_vec_mode_ex_o  (alu_vec_mode_ex),
-      .alu_is_clpx_ex_o   (alu_is_clpx_ex),
-      .alu_is_subrot_ex_o (alu_is_subrot_ex),
-      .alu_clpx_shift_ex_o(alu_clpx_shift_ex),
+      .alu_en_ex_o        (alu_en_ex_is),
+      .alu_operator_ex_o  (alu_operator_ex_is),
+      .alu_operand_a_ex_o (alu_operand_a_ex_is),
+      .alu_operand_b_ex_o (alu_operand_b_ex_is),
+      .alu_operand_c_ex_o (alu_operand_c_ex_is),
+      .bmask_a_ex_o       (bmask_a_ex_is),
+      .bmask_b_ex_o       (bmask_b_ex_is),
+      .imm_vec_ext_ex_o   (imm_vec_ext_ex_is),
+      .alu_vec_mode_ex_o  (alu_vec_mode_ex_is),
+      .alu_is_clpx_ex_o   (alu_is_clpx_ex_is),
+      .alu_is_subrot_ex_o (alu_is_subrot_ex_is),
+      .alu_clpx_shift_ex_o(alu_clpx_shift_ex_is),
 
-      .regfile_waddr_ex_o(regfile_waddr_ex),
-      .regfile_we_ex_o   (regfile_we_ex),
+      .regfile_waddr_ex_o(regfile_waddr_ex_is),
+      .regfile_we_ex_o   (regfile_we_ex_is),
 
-      .regfile_alu_we_ex_o   (regfile_alu_we_ex),
-      .regfile_alu_waddr_ex_o(regfile_alu_waddr_ex),
+      .regfile_alu_we_ex_o   (regfile_alu_we_ex_is),
+      .regfile_alu_waddr_ex_o(regfile_alu_waddr_ex_is),
 
       // MUL
-      .mult_operator_ex_o   (mult_operator_ex),  // from ID to EX stage
-      .mult_en_ex_o         (mult_en_ex),  // from ID to EX stage
-      .mult_sel_subword_ex_o(mult_sel_subword_ex),  // from ID to EX stage
-      .mult_signed_mode_ex_o(mult_signed_mode_ex),  // from ID to EX stage
-      .mult_operand_a_ex_o  (mult_operand_a_ex),  // from ID to EX stage
-      .mult_operand_b_ex_o  (mult_operand_b_ex),  // from ID to EX stage
-      .mult_operand_c_ex_o  (mult_operand_c_ex),  // from ID to EX stage
-      .mult_imm_ex_o        (mult_imm_ex),  // from ID to EX stage
+      .mult_operator_ex_o    (mult_operator_ex_is),     // from ID to EX stage
+      .mult_en_ex_o          (mult_en_ex_is),           // from ID to EX stage
+      .mult_sel_subword_ex_o (mult_sel_subword_ex_is),  // from ID to EX stage
+      .mult_signed_mode_ex_o (mult_signed_mode_ex_is),  // from ID to EX stage
+      .mult_operand_a_ex_o   (mult_operand_a_ex_is),    // from ID to EX stage
+      .mult_operand_b_ex_o   (mult_operand_b_ex_is),    // from ID to EX stage
+      .mult_operand_c_ex_o   (mult_operand_c_ex_is),    // from ID to EX stage
+      .mult_imm_ex_o         (mult_imm_ex_is),          // from ID to EX stage
 
-      .mult_dot_op_a_ex_o  (mult_dot_op_a_ex),  // from ID to EX stage
-      .mult_dot_op_b_ex_o  (mult_dot_op_b_ex),  // from ID to EX stage
-      .mult_dot_op_c_ex_o  (mult_dot_op_c_ex),  // from ID to EX stage
-      .mult_dot_signed_ex_o(mult_dot_signed_ex),  // from ID to EX stage
-      .mult_is_clpx_ex_o   (mult_is_clpx_ex),  // from ID to EX stage
-      .mult_clpx_shift_ex_o(mult_clpx_shift_ex),  // from ID to EX stage
-      .mult_clpx_img_ex_o  (mult_clpx_img_ex),  // from ID to EX stage
+      .mult_dot_op_a_ex_o    (mult_dot_op_a_ex_is),     // from ID to EX stage
+      .mult_dot_op_b_ex_o    (mult_dot_op_b_ex_is),     // from ID to EX stage
+      .mult_dot_op_c_ex_o    (mult_dot_op_c_ex_is),     // from ID to EX stage
+      .mult_dot_signed_ex_o  (mult_dot_signed_ex_is),   // from ID to EX stage
+      .mult_is_clpx_ex_o     (mult_is_clpx_ex_is),      // from ID to EX stage
+      .mult_clpx_shift_ex_o  (mult_clpx_shift_ex_is),   // from ID to EX stage
+      .mult_clpx_img_ex_o    (mult_clpx_img_ex_is),      // from ID to EX stage
+
 
       // FPU
       .fs_off_i(fs_off),
       .frm_i   (frm_csr),
 
       // APU
-      .apu_en_ex_o      (apu_en_ex),
-      .apu_op_ex_o      (apu_op_ex),
-      .apu_lat_ex_o     (apu_lat_ex),
-      .apu_operands_ex_o(apu_operands_ex),
-      .apu_flags_ex_o   (apu_flags_ex),
-      .apu_waddr_ex_o   (apu_waddr_ex),
+      .apu_en_ex_o      (apu_en_ex_is),
+      .apu_op_ex_o      (apu_op_ex_is),
+      .apu_lat_ex_o     (apu_lat_ex_is),
+      .apu_operands_ex_o(apu_operands_ex_is),
+      .apu_flags_ex_o   (apu_flags_ex_is),
+      .apu_waddr_ex_o   (apu_waddr_ex_is),
 
-      .apu_read_regs_o        (apu_read_regs),
-      .apu_read_regs_valid_o  (apu_read_regs_valid),
+      .apu_read_regs_o        (apu_read_regs_is),
+      .apu_read_regs_valid_o  (apu_read_regs_valid_is),
       .apu_read_dep_i         (apu_read_dep),
       .apu_read_dep_for_jalr_i(apu_read_dep_for_jalr),
-      .apu_write_regs_o       (apu_write_regs),
-      .apu_write_regs_valid_o (apu_write_regs_valid),
+      .apu_write_regs_o       (apu_write_regs_is),
+      .apu_write_regs_valid_o (apu_write_regs_valid_is),
       .apu_write_dep_i        (apu_write_dep),
-      .apu_perf_dep_o         (perf_apu_dep),
+      .apu_perf_dep_o         (perf_apu_dep_is),
       .apu_busy_i             (apu_busy_o),
 
       // CSR ID/EX
-      .csr_access_ex_o      (csr_access_ex),
-      .csr_op_ex_o          (csr_op_ex),
+      .csr_access_ex_o      (csr_access_ex_is),
+      .csr_op_ex_o          (csr_op_ex_is),
       .current_priv_lvl_i   (current_priv_lvl),
-      .csr_irq_sec_o        (csr_irq_sec),
-      .csr_cause_o          (csr_cause),
-      .csr_save_if_o        (csr_save_if),  // control signal to save pc
-      .csr_save_id_o        (csr_save_id),  // control signal to save pc
-      .csr_save_ex_o        (csr_save_ex),  // control signal to save pc
-      .csr_restore_mret_id_o(csr_restore_mret_id),  // control signal to restore pc
-      .csr_restore_uret_id_o(csr_restore_uret_id),  // control signal to restore pc
+      .csr_irq_sec_o        (csr_irq_sec_is),
+      .csr_cause_o          (csr_cause_is),
+      .csr_save_if_o        (csr_save_if_is),  // control signal to save pc
+      .csr_save_id_o        (csr_save_id_is),  // control signal to save pc
+      .csr_save_ex_o        (csr_save_ex_is),  // control signal to save pc
+      .csr_restore_mret_id_o(csr_restore_mret_id_is),  // control signal to restore pc
+      .csr_restore_uret_id_o(csr_restore_uret_id_is),  // control signal to restore pc
 
-      .csr_restore_dret_id_o(csr_restore_dret_id),  // control signal to restore pc
+      .csr_restore_dret_id_o(csr_restore_dret_id_is),  // control signal to restore pc
 
-      .csr_save_cause_o(csr_save_cause),
+      .csr_save_cause_o(csr_save_cause_is),
 
       // hardware loop signals to IF hwlp controller
-      .hwlp_start_o(hwlp_start),
-      .hwlp_end_o  (hwlp_end),
-      .hwlp_cnt_o  (hwlp_cnt),
+      .hwlp_start_o(hwlp_start_is),
+      .hwlp_end_o  (hwlp_end_is),
+      .hwlp_cnt_o  (hwlp_cnt_is),
 
       .hwlp_jump_o  (hwlp_jump),
       .hwlp_target_o(hwlp_target),
 
       // LSU
-      .data_req_ex_o       (data_req_ex),  // to load store unit
-      .data_we_ex_o        (data_we_ex),  // to load store unit
-      .atop_ex_o           (data_atop_ex),
-      .data_type_ex_o      (data_type_ex),  // to load store unit
-      .data_sign_ext_ex_o  (data_sign_ext_ex),  // to load store unit
-      .data_reg_offset_ex_o(data_reg_offset_ex),  // to load store unit
-      .data_load_event_ex_o(data_load_event_ex),  // to load store unit
+      .data_req_ex_o       (data_req_ex_is),  // to load store unit
+      .data_we_ex_o        (data_we_ex_is),  // to load store unit
+      .atop_ex_o           (data_atop_ex_is),
+      .data_type_ex_o      (data_type_ex_is),  // to load store unit
+      .data_sign_ext_ex_o  (data_sign_ext_ex_is),  // to load store unit
+      .data_reg_offset_ex_o(data_reg_offset_ex_is),  // to load store unit
+      .data_load_event_ex_o(data_load_event_ex_is),  // to load store unit
 
-      .data_misaligned_ex_o(data_misaligned_ex),  // to load store unit
+      .data_misaligned_ex_o(data_misaligned_ex_is),  // to load store unit
 
       .prepost_useincr_ex_o(useincr_addr_ex),
       .data_misaligned_i   (data_misaligned),
@@ -680,16 +780,16 @@ module cv32e40p_core
       .irq_i         (irq_i),
       .irq_sec_i     ((PULP_SECURE) ? irq_sec_i : 1'b0),
       .mie_bypass_i  (mie_bypass),
-      .mip_o         (mip),
+      .mip_o         (mip_is),
       .m_irq_enable_i(m_irq_enable),
       .u_irq_enable_i(u_irq_enable),
       .irq_ack_o     (irq_ack_o),
       .irq_id_o      (irq_id_o),
 
       // Debug Signal
-      .debug_mode_o          (debug_mode),
-      .debug_cause_o         (debug_cause),
-      .debug_csr_save_o      (debug_csr_save),
+      .debug_mode_o          (debug_mode_is),
+      .debug_cause_o         (debug_cause_is),
+      .debug_csr_save_o      (debug_csr_save_is),
       .debug_req_i           (debug_req_i),
       .debug_havereset_o     (debug_havereset_o),
       .debug_running_o       (debug_running_o),
@@ -718,21 +818,339 @@ module cv32e40p_core
       .mult_multicycle_i(mult_multicycle),
 
       // Performance Counters
-      .mhpmevent_minstret_o    (mhpmevent_minstret),
-      .mhpmevent_load_o        (mhpmevent_load),
-      .mhpmevent_store_o       (mhpmevent_store),
-      .mhpmevent_jump_o        (mhpmevent_jump),
-      .mhpmevent_branch_o      (mhpmevent_branch),
-      .mhpmevent_branch_taken_o(mhpmevent_branch_taken),
-      .mhpmevent_compressed_o  (mhpmevent_compressed),
-      .mhpmevent_jr_stall_o    (mhpmevent_jr_stall),
-      .mhpmevent_imiss_o       (mhpmevent_imiss),
-      .mhpmevent_ld_stall_o    (mhpmevent_ld_stall),
-      .mhpmevent_pipe_stall_o  (mhpmevent_pipe_stall),
+      .mhpmevent_minstret_o    (mhpmevent_minstret_is),
+      .mhpmevent_load_o        (mhpmevent_load_is),
+      .mhpmevent_store_o       (mhpmevent_store_is),
+      .mhpmevent_jump_o        (mhpmevent_jump_is),
+      .mhpmevent_branch_o      (mhpmevent_branch_is),
+      .mhpmevent_branch_taken_o(mhpmevent_branch_taken_is),
+      .mhpmevent_compressed_o  (mhpmevent_compressed_is),
+      .mhpmevent_jr_stall_o    (mhpmevent_jr_stall_is),
+      .mhpmevent_imiss_o       (mhpmevent_imiss_is),
+      .mhpmevent_ld_stall_o    (mhpmevent_ld_stall_is),
+      .mhpmevent_pipe_stall_o  (mhpmevent_pipe_stall_is),
 
       .perf_imiss_i(perf_imiss),
       .mcounteren_i(mcounteren)
   );
+
+//   ___ ____    ____ _____  _    ____ _____ 
+//  |_ _/ ___|  / ___|_   _|/ \  / ___| ____|
+//   | |\___ \  \___ \ | | / _ \| |  _|  _|  
+//   | | ___) |  ___) || |/ ___ \ |_| | |___ 
+//  |___|____/  |____/ |_/_/   \_\____|_____|
+//                                           
+  //////////////////////////////////////////////////////////////////////////////////////////////
+cv32e40p_issue_stage #(
+  .COREV_PULP(1),
+  .COREV_CLUSTER(0),
+  .N_HWLP(2),
+  .N_HWLP_BITS($clog2(N_HWLP)),
+  .PULP_SECURE(0),
+  .USE_PMP(0),
+  .A_EXTENSION(0),
+  .APU(0),
+  .FPU(0),
+  .FPU_ADDMUL_LAT(0),
+  .FPU_OTHERS_LAT(0),
+  .ZFINX(0),
+  .APU_NARGS_CPU(3),
+  .APU_WOP_CPU(6),
+  .APU_NDSFLAGS_CPU(15),
+  .APU_NUSFLAGS_CPU(5),
+  .DEBUG_TRIGGER_EN(1)
+) u_issue_stage (
+  // Clock & Reset
+  .clk(clk),                               // input
+  .rst_n(rst_ni),                             // input, active-low
+
+  // General / IF / Decode
+  .ctrl_busy_i(),                       // input
+  .is_decoding_i(),                     // input
+  .instr_req_i(),                       // input
+
+  // Branch / Jump
+  .branch_in_ex_i(branch_in_is),                    // input
+  .jump_target_i(),                     // input  [31:0]
+  .ctrl_transfer_insn_in_dec_i(ctrl_transfer_insn_in_dec_is),       // input  [1:0]
+
+  // PC/Trap control
+  .clear_instr_valid_i(),               // input
+  .pc_set_i(),                          // input
+  .pc_mux_i(),                          // input  [3:0]
+  .exc_pc_mux_i(),                      // input  [2:0]
+  .trap_addr_mux_i(),                   // input  [1:0]
+
+  // Handshake
+  .halt_if_i(),                         // input
+  .id_ready_i(),                        // input
+  .id_valid_i(),                        // input
+
+  // ------------------------ ID/EX bundle ------------------------
+  .pc_ex_i(pc_ex_is),                           // input  [31:0]
+  .pc_if_i(pc_if),                           // input  [31:0]
+  .pc_id_i(pc_id),                           // input  [31:0]
+  .csr_mtvec_init_i(csr_mtvec_init),  // input
+  .csr_mtvec_init_o(csr_mtvec_init_cs),  // output
+
+  .pc_id_o(pc_id_cs),                           // output [31:0]
+  .pc_if_o(pc_if_cs),                           // output [31:0]
+
+  .alu_operand_a_ex_i(alu_operand_a_ex_is),                // input  [31:0]
+  .alu_operand_b_ex_i(alu_operand_b_ex_is),                // input  [31:0]
+  .alu_operand_c_ex_i(alu_operand_c_ex_is),                // input  [31:0]
+  .bmask_a_ex_i(bmask_a_ex_is),                      // input  [4:0]
+  .bmask_b_ex_i(bmask_b_ex_is),                      // input  [4:0]
+  .imm_vec_ext_ex_i(imm_vec_ext_ex_is),                  // input  [1:0]
+  .alu_vec_mode_ex_i(alu_vec_mode_ex_is),                 // input  [1:0]
+
+  .regfile_waddr_ex_i(regfile_waddr_ex_is),                // input  [5:0]
+  .regfile_we_ex_i(regfile_we_ex_is),                   // input
+
+  .regfile_alu_waddr_ex_i(regfile_alu_waddr_ex_is),            // input  [5:0]
+  .regfile_alu_we_ex_i(regfile_alu_we_ex_is),               // input
+
+  // ALU
+  .alu_en_ex_i(alu_en_ex_is),                       // input
+  .alu_operator_ex_i(alu_operator_ex_is),                 // input  alu_opcode_e
+  .alu_is_clpx_ex_i(alu_is_clpx_ex_is),                  // input
+  .alu_is_subrot_ex_i(alu_is_subrot_ex_is),                // input
+  .alu_clpx_shift_ex_i(alu_clpx_shift_ex_is),               // input  [1:0]
+
+  // MUL
+  .mult_operator_ex_i    (mult_operator_ex_is),      // input  mul_opcode_e
+  .mult_operand_a_ex_i   (mult_operand_a_ex_is),     // input  [31:0]
+  .mult_operand_b_ex_i   (mult_operand_b_ex_is),     // input  [31:0]
+  .mult_operand_c_ex_i   (mult_operand_c_ex_is),     // input  [31:0]
+  .mult_en_ex_i          (mult_en_ex_is),            // input
+  .mult_sel_subword_ex_i (mult_sel_subword_ex_is),   // input
+  .mult_signed_mode_ex_i (mult_signed_mode_ex_is),   // input  [1:0]
+  .mult_imm_ex_i         (mult_imm_ex_is),           // input  [4:0]
+
+  .mult_dot_op_a_ex_i    (mult_dot_op_a_ex_is),      // input  [31:0]
+  .mult_dot_op_b_ex_i    (mult_dot_op_b_ex_is),      // input  [31:0]
+  .mult_dot_op_c_ex_i    (mult_dot_op_c_ex_is),      // input  [31:0]
+  .mult_dot_signed_ex_i  (mult_dot_signed_ex_is),    // input  [1:0]
+  .mult_is_clpx_ex_i     (mult_is_clpx_ex_is),       // input
+  .mult_clpx_shift_ex_i  (mult_clpx_shift_ex_is),    // input  [1:0]
+  .mult_clpx_img_ex_i    (mult_clpx_img_ex_is),       // input
+
+
+  // APU
+  .apu_en_ex_i(apu_en_ex_is),                       // input
+  .apu_op_ex_i(apu_op_ex_is),                       // input  [APU_WOP_CPU-1:0]
+  .apu_lat_ex_i(apu_lat_ex_is),                      // input  [1:0]
+  .apu_operands_ex_i(apu_operands_ex_is),                 // input  [APU_NARGS_CPU-1:0][31:0]
+  .apu_flags_ex_i(),                    // input  [APU_NDSFLAGS_CPU-1:0]
+  .apu_waddr_ex_i(apu_waddr_ex_is),                    // input  [5:0]
+
+  .apu_read_regs_i(apu_read_regs_is),                   // input  [2:0][5:0]
+  .apu_read_regs_valid_i(apu_read_regs_valid_is),             // input  [2:0]
+  .apu_write_regs_i(apu_write_regs_is),                  // input  [1:0][5:0]
+  .apu_write_regs_valid_i(apu_write_regs_valid_is),            // input  [1:0]
+  .apu_perf_dep_i(perf_apu_dep_is),                    // input
+
+  // CSR
+  .csr_access_ex_i(csr_access_ex_is),                   // input
+  .csr_op_ex_i(csr_op_ex_is),                       // input  csr_opcode_e
+  .csr_irq_sec_i(csr_irq_sec_is),                     // input
+  .csr_cause_i(csr_cause_is),                       // input  [5:0]
+  .csr_save_if_i(csr_save_if_is),                     // input
+  .csr_save_id_i(csr_save_id_is),                     // input
+  .csr_save_ex_i(csr_save_ex_is),                     // input
+  .csr_restore_mret_id_i(csr_restore_mret_id_is),             // input
+  .csr_restore_uret_id_i(csr_restore_uret_id_is),             // input
+  .csr_restore_dret_id_i(csr_restore_dret_id_is),             // input
+  .csr_save_cause_i(csr_save_cause_is),                  // input
+
+  // HWLoop
+  .hwlp_start_i(hwlp_start),                      // input  [N_HWLP-1:0][31:0]
+  .hwlp_end_i(hwlp_end),                        // input  [N_HWLP-1:0][31:0]
+  .hwlp_cnt_i(hwlp_cnt),                        // input  [N_HWLP-1:0][31:0]
+  .hwlp_jump_i(),                       // input
+  .hwlp_target_i(),                     // input  [31:0]
+
+  // LSU
+  .data_req_ex_i(data_req_ex_is),                     // input
+  .data_we_ex_i(data_we_ex_is),                      // input
+  .data_type_ex_i(data_type_ex_is),                    // input  [1:0]
+  .data_sign_ext_ex_i(data_sign_ext_ex_is),                // input  [1:0]
+  .data_reg_offset_ex_i(data_reg_offset_ex_is),              // input  [1:0]
+  .data_load_event_ex_i(data_load_event_ex_is),              // input
+
+  .data_misaligned_ex_i(data_misaligned_ex_is),              // input
+  .prepost_useincr_ex_i(useincr_addr_ex_is),              // input
+  .data_err_ack_i(),                    // input
+  .atop_ex_i(data_atop_ex_is),                         // input  [5:0]
+
+  // IRQ / Debug / Wake
+  .mip_i(mip_is),                             // input  [31:0]
+  .irq_ack_i(),                         // input
+  .irq_id_i(),                          // input  [4:0]
+  .exc_cause_i(),                       // input  [4:0]
+
+  .debug_mode_i(debug_mode_is),                      // input
+  .debug_cause_i(debug_cause_is),                     // input  [2:0]
+  .debug_csr_save_i(debug_csr_save_is),                  // input
+  .debug_p_elw_no_sleep_i(),            // input
+  .debug_havereset_i(),                 // input
+  .debug_running_i(),                   // input
+  .debug_halted_i(),                    // input
+
+  .wake_from_sleep_i(),                 // input
+
+  // Perf counters (inputs)
+  .mhpmevent_minstret_i     (mhpmevent_minstret_is),     // input
+  .mhpmevent_load_i         (mhpmevent_load_is),        // input
+  .mhpmevent_store_i        (mhpmevent_store_is),       // input
+  .mhpmevent_jump_i         (mhpmevent_jump_is),        // input
+  .mhpmevent_branch_i       (mhpmevent_branch_is),      // input
+  .mhpmevent_branch_taken_i (mhpmevent_branch_taken_is),// input
+  .mhpmevent_compressed_i   (mhpmevent_compressed_is),  // input
+  .mhpmevent_jr_stall_i     (mhpmevent_jr_stall_is),    // input
+  .mhpmevent_imiss_i        (mhpmevent_imiss_is),       // input
+  .mhpmevent_ld_stall_i     (mhpmevent_ld_stall_is),    // input
+  .mhpmevent_pipe_stall_i   (mhpmevent_pipe_stall_is),   // input
+
+
+  // ------------------------------ Outputs ------------------------------
+  .ctrl_busy_o(),                       // output
+  .is_decoding_o(),                     // output
+  .instr_req_o(),                       // output
+
+  .branch_in_ex_o(branch_in_ex),                    // output
+  .jump_target_o(),                     // output [31:0]
+  .ctrl_transfer_insn_in_dec_o(ctrl_transfer_insn_in_dec),       // output [1:0]
+
+  .clear_instr_valid_o(),               // output
+  .pc_set_o(),                          // output
+  .pc_mux_o(),                          // output [3:0]
+  .exc_pc_mux_o(),                      // output [2:0]
+  .trap_addr_mux_o(),                   // output [1:0]
+
+  .halt_if_o(),                         // output
+  .id_ready_o(),                        // output
+  .id_valid_o(),                        // output
+
+  .pc_ex_o(pc_ex),                           // output [31:0]
+
+  .alu_operand_a_ex_o(alu_operand_a_ex),                // output [31:0]
+  .alu_operand_b_ex_o(alu_operand_b_ex),                // output [31:0]
+  .alu_operand_c_ex_o(alu_operand_c_ex),                // output [31:0]
+  .bmask_a_ex_o(bmask_a_ex),                      // output [4:0]
+  .bmask_b_ex_o(bmask_b_ex),                      // output [4:0]
+  .imm_vec_ext_ex_o(imm_vec_ext_ex),                  // output [1:0]
+  .alu_vec_mode_ex_o(alu_vec_mode_ex),                 // output [1:0]
+
+  .regfile_waddr_ex_o(regfile_waddr_ex),                // output [5:0]
+  .regfile_we_ex_o(regfile_we_ex),                   // output
+
+  .regfile_alu_waddr_ex_o(regfile_alu_waddr_ex),            // output [5:0]
+  .regfile_alu_we_ex_o(regfile_alu_we_ex),               // output
+
+  .alu_en_ex_o(alu_en_ex),                       // output
+  .alu_operator_ex_o(alu_operator_ex),                 // output alu_opcode_e
+  .alu_is_clpx_ex_o(alu_is_clpx_ex),                  // output
+  .alu_is_subrot_ex_o(alu_is_subrot_ex),                // output
+  .alu_clpx_shift_ex_o(alu_clpx_shift_ex),               // output [1:0]
+
+  // MUL
+  .mult_operator_ex_o    (mult_operator_ex),      // output mul_opcode_e
+  .mult_operand_a_ex_o   (mult_operand_a_ex),     // output [31:0]
+  .mult_operand_b_ex_o   (mult_operand_b_ex),     // output [31:0]
+  .mult_operand_c_ex_o   (mult_operand_c_ex),     // output [31:0]
+  .mult_en_ex_o          (mult_en_ex),            // output
+  .mult_sel_subword_ex_o (mult_sel_subword_ex),   // output
+  .mult_signed_mode_ex_o (mult_signed_mode_ex),   // output [1:0]
+  .mult_imm_ex_o         (mult_imm_ex),           // output [4:0]
+
+  .mult_dot_op_a_ex_o    (mult_dot_op_a_ex),      // output [31:0]
+  .mult_dot_op_b_ex_o    (mult_dot_op_b_ex),      // output [31:0]
+  .mult_dot_op_c_ex_o    (mult_dot_op_c_ex),      // output [31:0]
+  .mult_dot_signed_ex_o  (mult_dot_signed_ex),    // output [1:0]
+  .mult_is_clpx_ex_o     (mult_is_clpx_ex),       // output
+  .mult_clpx_shift_ex_o  (mult_clpx_shift_ex),    // output [1:0]
+  .mult_clpx_img_ex_o    (mult_clpx_img_ex),       // output
+
+
+  .apu_en_ex_o(apu_en_ex),                       // output
+  .apu_op_ex_o(apu_op_ex),                       // output [APU_WOP_CPU-1:0]
+  .apu_lat_ex_o(apu_lat_ex),                      // output [1:0]
+  .apu_operands_ex_o(apu_operands_ex),                 // output [APU_NARGS_CPU-1:0][31:0]
+  .apu_flags_ex_o(),                    // output [APU_NDSFLAGS_CPU-1:0]
+  .apu_waddr_ex_o(apu_waddr_ex),                    // output [5:0]
+
+  .apu_read_regs_o(apu_read_regs),                   // output [2:0][5:0]
+  .apu_read_regs_valid_o(apu_read_regs_valid),             // output [2:0]
+  .apu_write_regs_o(apu_write_regs),                  // output [1:0][5:0]
+  .apu_write_regs_valid_o(apu_write_regs_valid),            // output [1:0]
+  .apu_perf_dep_o(perf_apu_dep),                    // output
+
+  .csr_access_ex_o(csr_access_ex),                   // output
+  .csr_op_ex_o(csr_op_ex),                       // output csr_opcode_e
+  .csr_irq_sec_o(csr_irq_sec),                     // output
+  .csr_cause_o(csr_cause),                       // output [5:0]
+  .csr_save_if_o(csr_save_if),                     // output
+  .csr_save_id_o(csr_save_id),                     // output
+  .csr_save_ex_o(csr_save_ex),                     // output
+  .csr_restore_mret_id_o(csr_restore_mret_id),             // output
+  .csr_restore_uret_id_o(csr_restore_uret_id),             // output
+  .csr_restore_dret_id_o(csr_restore_dret_id),             // output
+  .csr_save_cause_o(csr_save_cause),                  // output
+
+  .hwlp_start_o(),                      // output [N_HWLP-1:0][31:0]
+  .hwlp_end_o(),                        // output [N_HWLP-1:0][31:0]
+  .hwlp_cnt_o(),                        // output [N_HWLP-1:0][31:0]
+  .hwlp_jump_o(),                       // output
+  .hwlp_target_o(),                     // output [31:0]
+
+  .data_req_ex_o(data_req_ex),                     // output
+  .data_we_ex_o(data_we_ex),                      // output
+  .data_type_ex_o(data_type_ex),                    // output [1:0]
+  .data_sign_ext_ex_o(data_sign_ext_ex),                // output [1:0]
+  .data_reg_offset_ex_o(data_reg_offset_ex),              // output [1:0]
+  .data_load_event_ex_o(data_load_event_ex),              // output
+
+  .data_misaligned_ex_o(data_misaligned_ex),              // output
+
+  .prepost_useincr_ex_o(useincr_addr_ex),              // output
+  .data_err_ack_o(),                    // output
+
+  .atop_ex_o(data_atop_ex),                         // output [5:0]
+
+  .mip_o(mip),                             // output [31:0]
+  .irq_ack_o(),                         // output
+  .irq_id_o(),                          // output [4:0]
+  .exc_cause_o(),                       // output [4:0]
+
+  .debug_mode_o(debug_mode),                      // output
+  .debug_cause_o(debug_cause),                     // output [2:0]
+  .debug_csr_save_o(debug_csr_save),                  // output
+  .debug_p_elw_no_sleep_o(),            // output
+  .debug_havereset_o(),                 // output
+  .debug_running_o(),                   // output
+  .debug_halted_o(),                    // output
+
+  .wake_from_sleep_o(),                 // output
+
+  .mhpmevent_minstret_o     (mhpmevent_minstret),       // output
+  .mhpmevent_load_o         (mhpmevent_load),          // output
+  .mhpmevent_store_o        (mhpmevent_store),         // output
+  .mhpmevent_jump_o         (mhpmevent_jump),          // output
+  .mhpmevent_branch_o       (mhpmevent_branch),        // output
+  .mhpmevent_branch_taken_o (mhpmevent_branch_taken),  // output
+  .mhpmevent_compressed_o   (mhpmevent_compressed),    // output
+  .mhpmevent_jr_stall_o     (mhpmevent_jr_stall),      // output
+  .mhpmevent_imiss_o        (mhpmevent_imiss),         // output
+  .mhpmevent_ld_stall_o     (mhpmevent_ld_stall),      // output
+  .mhpmevent_pipe_stall_o   (mhpmevent_pipe_stall)     // output
+
+);
+
+
+
+
+
 
 
   /////////////////////////////////////////////////////
@@ -805,7 +1223,7 @@ module cv32e40p_core
       .apu_lat_i     (apu_lat_ex),
       .apu_operands_i(apu_operands_ex),
       .apu_waddr_i   (apu_waddr_ex),
-
+      //input all from ID stage
       .apu_read_regs_i        (apu_read_regs),
       .apu_read_regs_valid_i  (apu_read_regs_valid),
       .apu_read_dep_o         (apu_read_dep),
@@ -970,7 +1388,7 @@ module cv32e40p_core
       .utvec_mode_o    (utvec_mode),
       // mtvec address
       .mtvec_addr_i    (mtvec_addr_i[31:0]),
-      .csr_mtvec_init_i(csr_mtvec_init),
+      .csr_mtvec_init_i(csr_mtvec_init_cs),
       // Interface to CSRs (SRAM like)
       .csr_addr_i      (csr_addr),
       .csr_wdata_i     (csr_wdata),
@@ -1011,8 +1429,8 @@ module cv32e40p_core
       .pmp_addr_o(pmp_addr),
       .pmp_cfg_o (pmp_cfg),
 
-      .pc_if_i(pc_if),
-      .pc_id_i(pc_id),
+      .pc_if_i(pc_if_cs),
+      .pc_id_i(pc_id_cs),
       .pc_ex_i(pc_ex),
 
       .csr_save_if_i     (csr_save_if),
