@@ -11,11 +11,13 @@ main:
 # 46 "custom/hello_world.c" 1
 	li t0,0
 li t1,0
-1: add t0, t0, t1
-   addi t1, t1, 1
-   div t3,t0,t1
-   li t2,11
-   blt t1, t2, 1b
+ 1: add t0, t0, 1
+    addi t1, t1, 1
+    csrrw t4, mcycle, x0
+    csrrw t5, minstret, x0
+    mul  t3, t0, t1
+    li   t2, 11
+    blt  t1, t2, 1b
 
 # 0 "" 2
  #NO_APP

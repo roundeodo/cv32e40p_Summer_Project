@@ -36,7 +36,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module cv32e40p_obi_interface #(
-    parameter TRANS_STABLE =  0                   // Are trans_addr_i, trans_we_i, trans_be_i, trans_wdata_i, trans_atop_i signals stable during a non-accepted transaction?
+  parameter TRANS_STABLE =  0,                  // Are trans_addr_i, trans_we_i, trans_be_i, trans_wdata_i, trans_atop_i signals stable during a non-accepted transaction?
+  parameter RDATA_WIDTH = 32                // Width of the read data channel (R). Keep 32 for data path; set 64 for instruction path widening.
 ) (
     input logic clk,
     input logic rst_n,
@@ -50,10 +51,10 @@ module cv32e40p_obi_interface #(
     input logic [31:0] trans_wdata_i,
     input  logic  [5:0] trans_atop_i,             // Future proof addition (not part of OBI 1.0 spec; not used in CV32E40P)
 
-    // Transaction response interface
-    output logic resp_valid_o,  // Note: Consumer is assumed to be 'ready' whenever resp_valid_o = 1
-    output logic [31:0] resp_rdata_o,
-    output logic resp_err_o,
+  // Transaction response interface
+  output logic resp_valid_o,  // Note: Consumer is assumed to be 'ready' whenever resp_valid_o = 1
+  output logic [RDATA_WIDTH-1:0] resp_rdata_o,
+  output logic resp_err_o,
 
     // OBI interface
     output logic        obi_req_o,
@@ -61,9 +62,9 @@ module cv32e40p_obi_interface #(
     output logic [31:0] obi_addr_o,
     output logic        obi_we_o,
     output logic [ 3:0] obi_be_o,
-    output logic [31:0] obi_wdata_o,
+  output logic [31:0] obi_wdata_o,
     output logic [ 5:0] obi_atop_o,
-    input  logic [31:0] obi_rdata_i,
+  input  logic [RDATA_WIDTH-1:0] obi_rdata_i,
     input  logic        obi_rvalid_i,
     input  logic        obi_err_i
 );

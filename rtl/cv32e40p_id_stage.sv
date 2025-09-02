@@ -62,9 +62,14 @@ module cv32e40p_id_stage
     // Interface to IF stage
     input  logic        instr_valid_i,
     input  logic [31:0] instr_rdata_i,  // comes from pipeline of IF stage
+  // slot1 inputs from IF/ID
+  input  logic        instr_valid1_i,
+  input  logic [31:0] instr_rdata1_i,
     output logic        instr_req_o,
-    input  logic        is_compressed_i,
-    input  logic        illegal_c_insn_i,
+  input  logic        is_compressed_i,
+  input  logic        illegal_c_insn_i,
+  input  logic        is_compressed1_i,
+  input  logic        illegal_c_insn1_i,
 
     // Jumps and branches
     output logic        branch_in_ex_o,
@@ -82,10 +87,14 @@ module cv32e40p_id_stage
 
     input logic is_fetch_failed_i,
 
-    input logic [31:0] pc_id_i,
+  input logic [31:0] pc_id_i,
+  // slot1 PC from IF/ID
+  input logic [31:0] pc1_id_i,
 
     // Stalls
-    output logic halt_if_o,  // controller requests a halt of the IF stage
+  output logic halt_if_o,  // controller requests a halt of the IF stage
+  // one-shot soft stall to serialize slot0/slot1
+  output logic halt_if_temp_o,
 
     output logic id_ready_o,  // ID stage is ready for the next instruction
     input  logic ex_ready_i,  // EX stage is ready for the next instruction
@@ -267,7 +276,15 @@ module cv32e40p_id_stage
   localparam REG_D_MSB = 11;
   localparam REG_D_LSB = 7;
 
+  // Effective instruction selection (slot0 first, then slot1 on soft-serialized cycle)
   logic [31:0] instr;
+  logic        instr_valid_eff;
+  logic        is_compressed_eff;
+  logic        illegal_c_insn_eff;
+  logic [31:0] pc_id_eff;
+  logic        pending_slot1_q, pending_slot1_d;
+ 
+  logic        pc_set_q;
 
 
   // Decoder/Controller ID stage internal signals
@@ -483,7 +500,79 @@ module cv32e40p_id_stage
   logic minstret;
   logic perf_pipeline_stall;
 
-  assign instr = instr_rdata_i;
+  // Decide which slot to decode this cycle
+  always_comb begin
+    // default use slot0
+    instr             = instr_rdata_i;
+    instr_valid_eff   = instr_valid_i;
+    is_compressed_eff = is_compressed_i;
+    illegal_c_insn_eff= illegal_c_insn_i;
+    pc_id_eff         = pc_id_i;
+
+    if (pending_slot1_q) begin
+      instr             = instr_rdata1_i;
+      instr_valid_eff   = instr_valid1_i;
+      is_compressed_eff = is_compressed1_i;
+      illegal_c_insn_eff= illegal_c_insn1_i;
+      pc_id_eff         = pc1_id_i;
+    end
+
+    // but do not override a hard IF halt; halt_if has highest priority
+    if (pc_set_q) begin
+      instr_valid_eff = 1'b0;
+    end
+  end
+
+  // One-shot soft stall to consume slot1 next cycle
+  // Generate only when: no hard halt, slot0 and slot1 are both valid, and ID is ready to accept slot0 now.
+  // Hard halt always dominates and clears pending/soft.
+  always_comb begin
+    halt_if_temp_o  = 1'b0;
+    pending_slot1_d = pending_slot1_q;
+
+    // Hard IF halt has the highest priority over any soft behavior
+    if (halt_if_o) begin
+      pending_slot1_d = 1'b0;
+      halt_if_temp_o  = 1'b0;
+    end 
+    
+
+    else if (instr_valid_i && (!instr_valid1_i))begin
+      halt_if_temp_o  = 1'b0;
+      pending_slot1_d = 1'b0;
+    end
+    
+    else begin
+      if (pending_slot1_q) begin
+        if(pc_set_o)begin
+          pending_slot1_d = 1'b1; //无法保证是否稳定？？
+        end
+        // We are in the second cycle; when we actually decode slot1 (valid), clear the pending flag
+        else if (instr_valid1_i && id_ready_o) begin
+          pending_slot1_d = 1'b0;
+        end
+      end 
+      
+      else begin
+        // First cycle: both slots present and we intend to serialize
+        // Only treat as two distinct instructions if PCs differ; when IF emits only one, pc1==pc0
+        if (instr_valid_i && instr_valid1_i && (pc1_id_i != pc_id_i) && id_ready_o && !halt_if) begin
+          halt_if_temp_o  = 1'b1; // freeze IF for exactly one cycle
+          pending_slot1_d = 1'b1; // next cycle decode slot1
+        end
+      end
+    end
+  end
+
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
+      pending_slot1_q <= 1'b0;
+  pc_set_q        <= 1'b0;
+    end else begin
+      pending_slot1_q <= pending_slot1_d;
+  pc_set_q        <= pc_set_o; 
+    end
+  end
 
 
   // immediate extraction and sign extension
@@ -572,8 +661,8 @@ module cv32e40p_id_stage
 
   always_comb begin : jump_target_mux
     unique case (ctrl_transfer_target_mux_sel)
-      JT_JAL:  jump_target = pc_id_i + imm_uj_type;
-      JT_COND: jump_target = pc_id_i + imm_sb_type;
+  JT_JAL:  jump_target = pc_id_eff + imm_uj_type;
+  JT_COND: jump_target = pc_id_eff + imm_sb_type;
 
       // JALR: Cannot forward RS1, since the path is too long
       JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
@@ -599,7 +688,7 @@ module cv32e40p_id_stage
       OP_A_REGA_OR_FWD: alu_operand_a = operand_a_fw_id;
       OP_A_REGB_OR_FWD: alu_operand_a = operand_b_fw_id;
       OP_A_REGC_OR_FWD: alu_operand_a = operand_c_fw_id;
-      OP_A_CURRPC:      alu_operand_a = pc_id_i;
+  OP_A_CURRPC:      alu_operand_a = pc_id_eff;
       OP_A_IMM:         alu_operand_a = imm_a;
       default:          alu_operand_a = operand_a_fw_id;
     endcase
@@ -639,7 +728,7 @@ module cv32e40p_id_stage
       IMMB_I:      imm_b = imm_i_type;
       IMMB_S:      imm_b = imm_s_type;
       IMMB_U:      imm_b = imm_u_type;
-      IMMB_PCINCR: imm_b = is_compressed_i ? 32'h2 : 32'h4;
+  IMMB_PCINCR:     imm_b = is_compressed_eff ? 32'h2 : 32'h4;
       IMMB_S2:     imm_b = imm_s2_type;
       IMMB_BI:     imm_b = imm_bi_type;
       IMMB_S3:     imm_b = imm_s3_type;
@@ -1019,8 +1108,8 @@ module cv32e40p_id_stage
       .alu_bmask_b_mux_sel_o(alu_bmask_b_mux_sel),
 
       // from IF/ID pipeline
-      .instr_rdata_i   (instr),
-      .illegal_c_insn_i(illegal_c_insn_i),
+  .instr_rdata_i   (instr),
+  .illegal_c_insn_i(illegal_c_insn_eff),
 
       // ALU signals
       .alu_en_o              (alu_en),
@@ -1148,7 +1237,7 @@ module cv32e40p_id_stage
       .hwlp_mask_o(hwlp_mask),
 
       // from IF/ID pipeline
-      .instr_valid_i(instr_valid_i),
+  .instr_valid_i(instr_valid_eff),
 
       // from prefetcher
       .instr_req_o(instr_req_o),
@@ -1160,8 +1249,8 @@ module cv32e40p_id_stage
       .exc_cause_o    (exc_cause_o),
       .trap_addr_mux_o(trap_addr_mux_o),
 
-      // HWLoop signls
-      .pc_id_i(pc_id_i),
+  // HWLoop signls
+  .pc_id_i(pc_id_eff),
 
       .hwlp_start_addr_i(hwlp_start_o),
       .hwlp_end_addr_i  (hwlp_end_o),
@@ -1355,7 +1444,8 @@ module cv32e40p_id_stage
           .hwlp_dec_cnt_i(hwlp_dec_cnt)
       );
 
-      assign hwlp_valid = instr_valid_i & clear_instr_valid_o;
+  // Use effective slot's validity when updating HWLoop regs
+  assign hwlp_valid = instr_valid_eff & clear_instr_valid_o;
 
       // hwloop register id
       assign hwlp_regid = instr[7];  // rd contains hwloop register id
@@ -1363,8 +1453,8 @@ module cv32e40p_id_stage
       // hwloop target mux
       always_comb begin
         case (hwlp_target_mux_sel)
-          2'b00:   hwlp_end = pc_id_i + {imm_iz_type[29:0], 2'b0};
-          2'b01:   hwlp_end = pc_id_i + {imm_z_type[29:0], 2'b0};
+          2'b00:   hwlp_end = pc_id_eff + {imm_iz_type[29:0], 2'b0};
+          2'b01:   hwlp_end = pc_id_eff + {imm_z_type[29:0], 2'b0};
           2'b10:   hwlp_end = operand_a_fw_id;
           default: hwlp_end = operand_a_fw_id;
         endcase
@@ -1374,7 +1464,7 @@ module cv32e40p_id_stage
       always_comb begin
         case (hwlp_start_mux_sel)
           2'b00:   hwlp_start = hwlp_end;  // for PC + I imm
-          2'b01:   hwlp_start = pc_id_i + 4;  // for next PC
+          2'b01:   hwlp_start = pc_id_eff + 4;  // for next PC
           2'b10:   hwlp_start = operand_a_fw_id;
           default: hwlp_start = operand_a_fw_id;
         endcase
@@ -1592,7 +1682,7 @@ module cv32e40p_id_stage
         data_misaligned_ex_o <= 1'b0;
 
         if ((ctrl_transfer_insn_in_id == BRANCH_COND) || data_req_id) begin
-          pc_ex_o <= pc_id_i;
+          pc_ex_o <= pc_id_eff;
         end
 
         branch_in_ex_o <= ctrl_transfer_insn_in_id == BRANCH_COND;
@@ -1661,7 +1751,7 @@ module cv32e40p_id_stage
       mhpmevent_store_o <= minstret && data_req_id && data_we_id;
       mhpmevent_jump_o           <= minstret && ((ctrl_transfer_insn_in_id == BRANCH_JAL) || (ctrl_transfer_insn_in_id == BRANCH_JALR));
       mhpmevent_branch_o <= minstret && (ctrl_transfer_insn_in_id == BRANCH_COND);
-      mhpmevent_compressed_o <= minstret && is_compressed_i;
+  mhpmevent_compressed_o <= minstret && is_compressed_eff;
       // EX stage count
       mhpmevent_branch_taken_o <= mhpmevent_branch_o && branch_decision_i;
       // IF stage count
@@ -1677,6 +1767,7 @@ module cv32e40p_id_stage
 
   // stall control
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & (~apu_stall) & (~csr_apu_stall) & ex_ready_i);
+
   assign id_valid_o = (~halt_id) & id_ready_o;
   assign halt_if_o = halt_if;
 
@@ -1705,7 +1796,8 @@ module cv32e40p_id_stage
 
   // the instruction delivered to the ID stage should always be valid
   a_valid_instr :
-  assert property (@(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr)))
+  // Use effective signals in assertion to reflect the actually decoded slot
+  assert property (@(posedge clk) (instr_valid_eff & (~illegal_c_insn_eff)) |-> (!$isunknown(instr)))
   else $warning("%t, Instruction is valid, but has at least one X", $time);
 
   // Check that instruction after taken branch is flushed (more should actually be flushed, but that is not checked here)

@@ -40,7 +40,7 @@
 module cv32e40p_prefetch_controller #(
     parameter PULP_OBI = 0,  // Legacy PULP OBI behavior
     parameter COREV_PULP = 1,  // PULP ISA Extension (including PULP specific CSRs and hardware loop, excluding cv.elw)
-    parameter DEPTH = 4,  // Prefetch FIFO Depth
+    parameter DEPTH = 8,  // Prefetch FIFO Depth
     parameter FIFO_ADDR_DEPTH = (DEPTH > 1) ? $clog2(DEPTH) : 1  // Do not override this parameter
 ) (
     input logic clk,
@@ -92,8 +92,8 @@ module cv32e40p_prefetch_controller #(
   // Transaction address
   logic [31:0] trans_addr_q, trans_addr_incr;
 
-  // Word-aligned branch target address
-  logic [31:0] aligned_branch_addr;  // Word aligned branch target address
+  // 8-byte aligned target addresses for 64-bit beats
+  logic [31:0] aligned_branch_addr;  // 8B aligned branch target address
 
   // FIFO auxiliary signal
   logic fifo_valid;  // FIFO output valid (if !fifo_empty)
@@ -111,7 +111,7 @@ module cv32e40p_prefetch_controller #(
   //////////////////////////////////////////////////////////////////////////////
 
   // Busy if there are ongoing (or potentially outstanding) transfers
-  assign busy_o = (cnt_q != 3'b000) || trans_valid_o;
+  assign busy_o = (cnt_q != '0) || trans_valid_o;
 
   //////////////////////////////////////////////////////////////////////////////
   // IF/ID interface
@@ -131,11 +131,11 @@ module cv32e40p_prefetch_controller #(
   // - make sure that FIFO (cv32e40p_fetch_fifo) never overflows (fifo_cnt_i + cnt_q < DEPTH)
   //////////////////////////////////////////////////////////////////////////////
 
-  // Prefetcher will only perform word fetches
-  assign aligned_branch_addr = {branch_addr_i[31:2], 2'b00};
+  // Prefetcher will perform 64-bit-aligned fetches
+  assign aligned_branch_addr = {branch_addr_i[31:3], 3'b000};
 
-  // Increment address (always word fetch)
-  assign trans_addr_incr = {trans_addr_q[31:2], 2'b00} + 32'd4;
+  // Increment address by 8 bytes (next 64-bit beat)
+  assign trans_addr_incr = {trans_addr_q[31:3], 3'b000} + 32'd8;
 
   // Transaction request generation
   generate
@@ -143,12 +143,15 @@ module cv32e40p_prefetch_controller #(
       // OBI compatible (avoids combinatorial path from instr_rvalid_i to instr_req_o).
       // Multiple trans_* transactions can be issued (and accepted) before a response
       // (resp_*) is received.
-      assign trans_valid_o = req_i && (fifo_cnt_masked + cnt_q < DEPTH);
+  // For 64-bit FIFO entries, reserve one entry per outstanding response.
+  assign trans_valid_o = req_i && (fifo_cnt_masked + cnt_q < DEPTH);
     end else begin : gen_pulp_obi
       // Legacy PULP OBI behavior, i.e. only issue subsequent transaction if preceding transfer
       // is about to finish (re-introducing timing critical path from instr_rvalid_i to instr_req_o)
-      assign trans_valid_o = (cnt_q == 3'b000) ? req_i && (fifo_cnt_masked + cnt_q < DEPTH) :
-                                                 req_i && (fifo_cnt_masked + cnt_q < DEPTH) && resp_valid_i;
+  // For 64-bit FIFO entries, reserve one entry per outstanding response.
+  assign trans_valid_o = (cnt_q == '0) ?
+             (req_i && (fifo_cnt_masked + cnt_q < DEPTH)) :
+             (req_i && (fifo_cnt_masked + cnt_q < DEPTH) && resp_valid_i);
     end
   endgenerate
 
@@ -208,6 +211,7 @@ module cv32e40p_prefetch_controller #(
   // until the flush count is 0 again. (The flush count is initialized with the
   // number of outstanding transactions at the time of the branch).
   assign fifo_valid = !fifo_empty_i;
+  // Push a 32-bit word to FIFO when a new response arrives and fall-through is not possible.
   assign fifo_push_o = resp_valid_i && (fifo_valid || !fetch_ready_i) && !(branch_i || (flush_cnt_q > 0));
   assign fifo_pop_o = fifo_valid && fetch_ready_i;
 
@@ -272,12 +276,12 @@ module cv32e40p_prefetch_controller #(
       always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
           hwlp_flush_after_resp    <= 1'b0;
-          hwlp_flush_cnt_delayed_q <= 2'b00;
+          hwlp_flush_cnt_delayed_q <= '0;
         end else begin
           if (branch_i) begin
             // Reset the flush request if an interrupt is taken
             hwlp_flush_after_resp    <= 1'b0;
-            hwlp_flush_cnt_delayed_q <= 2'b00;
+            hwlp_flush_cnt_delayed_q <= '0;
           end else begin
             if (hwlp_wait_resp_flush) begin
               hwlp_flush_after_resp    <= 1'b1;
@@ -287,7 +291,7 @@ module cv32e40p_prefetch_controller #(
               // Reset the delayed flush request when it's completed
               if (hwlp_flush_resp_delayed) begin
                 hwlp_flush_after_resp    <= 1'b0;
-                hwlp_flush_cnt_delayed_q <= 2'b00;
+                hwlp_flush_cnt_delayed_q <= '0;
               end
             end
           end
@@ -308,7 +312,7 @@ module cv32e40p_prefetch_controller #(
       assign hwlp_wait_resp_flush     = 1'b0;
 
       assign hwlp_flush_after_resp    = 1'b0;
-      assign hwlp_flush_cnt_delayed_q = 2'b00;
+  assign hwlp_flush_cnt_delayed_q = '0;
       assign hwlp_flush_resp_delayed  = 1'b0;
 
 
@@ -361,3 +365,14 @@ module cv32e40p_prefetch_controller #(
   end
 
 endmodule  // cv32e40p_prefetch_controller
+
+`ifdef CV32E40P_ASSERT_ON
+// Ensure 8-byte alignment on transaction addresses for 64-bit fetch beats
+property p_trans_addr_8B_aligned;
+  @(posedge clk) (1'b1) |-> (trans_addr_o[2:0] == 3'b000);
+endproperty
+
+a_trans_addr_8B_aligned :
+assert property (p_trans_addr_8B_aligned);
+`endif
+

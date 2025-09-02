@@ -27,7 +27,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-module riscv_rvalid_stall(
+module riscv_rvalid_stall#(
+    parameter int DATA_WIDTH = 32
+)(
     // Clock, reset
     input               clk_i,
     input               rst_ni,
@@ -38,10 +40,10 @@ module riscv_rvalid_stall(
     input               we_i,
 
     // Read data valid, signals that read data from RAM is valid on this cycle
-    input [31:0]        rdata_i,
+    input  [DATA_WIDTH-1:0] rdata_i,
 
     // Response bus, connect directly to OBI response port
-    output logic [31:0] rdata_o,
+    output logic [DATA_WIDTH-1:0] rdata_o,
     output logic        rvalid_o,
 
     // Stall knobs
@@ -54,7 +56,7 @@ module riscv_rvalid_stall(
 // -----------------------------------------------------------------------------------------------
 // Local parameters
 // -----------------------------------------------------------------------------------------------
-localparam FIFO_DATA_WL  = 32;
+localparam FIFO_DATA_WL  = DATA_WIDTH;
 localparam FIFO_DELAY_WL = 4; // Up to 15 cycles of delay
 localparam FIFO_WE_WL    = 1;
 
@@ -136,7 +138,7 @@ always @(posedge clk_i or negedge rst_ni) begin
 `else
                 get_random_delay(),
 `endif
-                32'h0};
+                {DATA_WIDTH{1'b0}}};
 
             wptr_rdata <= wptr[FIFO_PTR_WL-2:0];
 
@@ -147,7 +149,7 @@ always @(posedge clk_i or negedge rst_ni) begin
         end
 
         if (rvalid_i_q) begin
-            fifo[wptr_rdata][31:0] <= fifo[wptr_rdata][FIFO_WE_LSB] ? 32'h0 : rdata_i;
+            fifo[wptr_rdata][FIFO_DATA_LSB +: FIFO_DATA_WL] <= fifo[wptr_rdata][FIFO_WE_LSB] ? {DATA_WIDTH{1'b0}} : rdata_i;
         end
     end
 end

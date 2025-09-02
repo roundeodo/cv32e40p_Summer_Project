@@ -77,7 +77,7 @@ module cv32e40p_tb_wrapper
     input  logic        instr_gnt_i,
     input  logic        instr_rvalid_i,
     output logic [31:0] instr_addr_o,
-    input  logic [31:0] instr_rdata_i,
+  input  logic [63:0] instr_rdata_i,
 
     // Data memory interface
     output logic        data_req_o,

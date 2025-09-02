@@ -49,9 +49,9 @@ module cv32e40p_top #(
     // Instruction memory interface
     output logic        instr_req_o,
     input  logic        instr_gnt_i,
-    input  logic        instr_rvalid_i,
-    output logic [31:0] instr_addr_o,
-    input  logic [31:0] instr_rdata_i,
+  input  logic        instr_rvalid_i,
+  output logic [31:0] instr_addr_o,
+  input  logic [63:0] instr_rdata_i,  //改成了64bit
 
     // Data memory interface
     output logic        data_req_o,
