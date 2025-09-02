@@ -64,7 +64,7 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(RTLSRC_TB_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 # riscv toolchain install path
-RISCV                    ?= ~/.riscv
+RISCV                    = /home/ICer/riscv
 RISCV_EXE_PREFIX         = $(RISCV)/bin/riscv32-unknown-elf-
 
 # assume vsim if no target chosen
@@ -118,7 +118,7 @@ vsim-all-fp: check_fpnew_deps .opt-rtl-fp
 vsim-all-pulp: .opt-rtl-pulp
 
 .opt-rtl-pulp: .build-rtl
-	$(VOPT) -work $(VWORK) $(VOPT_FLAGS) -g PULP_XPULP=1 $(RTLSRC_VLOG_TB_TOP) -o \
+	$(VOPT) -work $(VWORK) $(VOPT_FLAGS) -g COREV_PULP=1 $(RTLSRC_VLOG_TB_TOP) -o \
 	$(RTLSRC_VOPT_TB_TOP)
 	touch .opt-rtl-pulp
 
@@ -175,7 +175,7 @@ vsim-run-gui-fp: vsim-all-fp
 .PHONY: vsim-run-pulp
 vsim-run-pulp: ALL_VSIM_FLAGS += -c
 vsim-run-pulp: vsim-all-pulp
-	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GPULP_XPULP=1 \
+	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -G COREV_PULP=1 \
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 
@@ -183,7 +183,7 @@ vsim-run-pulp: vsim-all-pulp
 .PHONY: vsim-run-gui-pulp
 vsim-run-gui-pulp: ALL_VSIM_FLAGS += $(VSIM_GUI_FLAGS)
 vsim-run-gui-pulp: vsim-all-pulp
-	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -GPULP_XPULP=1 \
+	$(VSIM) -work $(VWORK) $(ALL_VSIM_FLAGS) -G COREV_PULP=1 \
 	$(RTLSRC_VOPT_TB_TOP) -do $(VSIM_SCRIPT)
 
 .PHONY: tb-clean-fp
@@ -204,6 +204,8 @@ tb-clean-fp:
 # This is an example for running a Hello World in the testbench
 # We link with our custom crt0.s and syscalls.c against newlib so that we can
 # use the c standard library
+
+
 custom/hello_world.elf: custom/hello_world.c
 	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
 		$(CUSTOM_GCC_FLAGS) \
@@ -215,11 +217,19 @@ custom/hello_world.elf: custom/hello_world.c
 		-I mem_stall \
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
+
+custom/hello_world.s: custom/hello_world.c
+	$(RISCV_EXE_PREFIX)gcc -S -march=rv32imc -Os -nostdlib \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-I mem_stall \
+		-o $@ $<
+
+		
 custom-clean:
 	rm -rf custom/hello_world.elf custom/hello_world.hex
 
 .PHONY: custom-vsim-run
-custom-vsim-run: vsim-all custom/hello_world.hex
+custom-vsim-run: vsim-all custom/hello_world.hex custom/hello_world.s
 custom-vsim-run: ALL_VSIM_FLAGS += "+firmware=custom/hello_world.hex"
 custom-vsim-run: vsim-run
 

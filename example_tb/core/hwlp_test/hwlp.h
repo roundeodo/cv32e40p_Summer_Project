@@ -32,7 +32,7 @@ by at least another instruction
 // L = x0, x1
 // uimmS = n_times
 // uimmL = 4*n_instructions
-
+asm volatile ("li t1, 0; li t2, 0;");  // 初始化寄存器
 // Simple loop
 #define HWLP_TEST0 asm volatile ("lp.setupi x1, 10, 16\n\t\
                                   addi t1, t1, 1\n\t\

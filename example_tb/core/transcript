@@ -1,0 +1,110 @@
+# vsim "+firmware=custom/hello_world.hex" -c tb_top_vopt -do "source vsim.tcl; exit -f" 
+# Start time: 01:07:27 on Sep 03,2025
+# Loading /tmp/ICer@IC_EDA_dpi_13406/linux_x86_64_gcc-5.3.0/export_tramp.so
+# //  Questa Sim-64
+# //  Version 10.7c linux_x86_64 Aug 17 2018
+# //
+# //  Copyright 1991-2018 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading sv_std.std
+# Loading work.tb_top(fast)
+# Loading work.cv32e40p_tb_subsystem(fast)
+# Loading work.cv32e40p_apu_core_pkg(fast)
+# Loading work.cv32e40p_top(fast)
+# Loading work.cv32e40p_pkg(fast)
+# Loading work.cv32e40p_core(fast)
+# Loading work.cv32e40p_sleep_unit(fast)
+# Loading work.cv32e40p_clock_gate(fast)
+# Loading work.cv32e40p_if_stage(fast)
+# Loading work.cv32e40p_prefetch_buffer(fast)
+# Loading work.cv32e40p_prefetch_controller(fast)
+# Loading work.cv32e40p_fifo(fast)
+# Loading work.cv32e40p_obi_interface(fast)
+# Loading work.cv32e40p_aligner(fast)
+# Loading work.cv32e40p_compressed_decoder(fast)
+# Loading work.cv32e40p_fpu_pkg(fast)
+# Loading work.cv32e40p_id_stage(fast)
+# Loading work.cv32e40p_register_file(fast)
+# Loading work.cv32e40p_decoder(fast)
+# Loading work.cv32e40p_controller(fast)
+# Loading work.cv32e40p_int_controller(fast)
+# Loading work.cv32e40p_hwloop_regs(fast)
+# Loading work.cv32e40p_ex_stage(fast)
+# Loading work.cv32e40p_alu(fast)
+# Loading work.cv32e40p_popcnt(fast)
+# Loading work.cv32e40p_ff_one(fast)
+# Loading work.cv32e40p_alu_div(fast)
+# Loading work.cv32e40p_mult(fast)
+# Loading work.cv32e40p_load_store_unit(fast)
+# Loading work.cv32e40p_obi_interface(fast__1)
+# Loading work.cv32e40p_cs_registers(fast)
+# Loading work.mm_ram(fast)
+# Loading work.amo_shim(fast)
+# Loading work.dp_ram(fast)
+# Loading work.perturbation_pkg(fast)
+# Loading work.riscv_rvalid_stall(fast)
+# Loading work.riscv_rvalid_stall(fast__1)
+# Loading work.riscv_gnt_stall(fast)
+# Loading work.riscv_gnt_stall(fast__1)
+# Loading work.cv32e40p_random_interrupt_generator(fast)
+# Compiling /tmp/ICer@IC_EDA_dpi_13406/linux_x86_64_gcc-5.3.0/exportwrapper.c
+# Loading /tmp/ICer@IC_EDA_dpi_13406/linux_x86_64_gcc-5.3.0/vsim_auto_compile.so
+# source vsim.tcl
+# ** Error: Unable to lock WLF file "vsim.wlf". Retrying 1 times, errno 11
+# ** Error: Unable to lock WLF file "vsim.wlf". Retrying 2 times, errno 11
+# ** Error: Unable to lock WLF file "vsim.wlf". Retrying 3 times, errno 11
+# ** Error: Cannot lock WLF file: "vsim.wlf"
+#           errno 11: Resource temporarily unavailable.
+# ** Warning: (vsim-WLF-5000) WLF file currently in use: vsim.wlf
+#           File in use by: ICer  Hostname: IC_EDA  ProcessID: 12472
+#           Attempting to use alternate WLF file "./wlftKK3hFx".
+# ** Warning: (vsim-WLF-5001) Could not open WLF file: vsim.wlf
+#           Using alternate file: ./wlftKK3hFx
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# configure wave not supported in batch mode
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/load_store_unit_i/#ALWAYS#421 File: ../../rtl/cv32e40p_load_store_unit.sv Line: 422
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#873 File: ../../rtl/cv32e40p_id_stage.sv Line: 874
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#858 File: ../../rtl/cv32e40p_id_stage.sv Line: 859
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#852 File: ../../rtl/cv32e40p_id_stage.sv Line: 853
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#843 File: ../../rtl/cv32e40p_id_stage.sv Line: 844
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#837 File:# End time: 01:08:50 on Sep 03,2025, Elapsed time: 0:04:52
+# Errors: 0, Warnings: 9
+true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#698(immediate_a_mux) File: ../../rtl/cv32e40p_id_stage.sv Line: 699
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 0  Process: /tb_top/wrapper_i/top_i/core_i/id_stage_i/#ALWAYS#613 File: ../../rtl/cv32e40p_id_stage.sv Line: 614
+# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.
+#    Time: 0 ns  Iteration: 2  Process: /tb_top/wrapper_i/top_i/core_i/load_store_unit_i/#ALWAYS#421 File: ../../rtl/cv32e40p_load_store_unit.sv Line: 422
+# 11
+# EXIT SUCCESS
+# ** Note: $finish    : tb_top.sv(140)
+#    Time: 31800 ns  Iteration: 1  Instance: /tb_top
+# 1
+# Break in Module tb_top at tb_top.sv line 140
+# Stopped at tb_top.sv line 140
+#  exit -f
+# End time: 01:07:38 on Sep 03,2025, Elapsed time: 0:00:11
+# Errors: 4, Warnings: 11

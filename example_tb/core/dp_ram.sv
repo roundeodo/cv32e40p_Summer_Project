@@ -36,7 +36,10 @@ module dp_ram #(
   logic [ADDR_WIDTH-1:0] addr_a_int;
   logic [ADDR_WIDTH-1:0] addr_b_int;
 
-  always_comb addr_a_int = {addr_a_i[ADDR_WIDTH-1:2], 2'b0};
+  // Align port A (instruction read) to the beat size: INSTR_RDATA_WIDTH/8 bytes
+  // For 64-bit, this becomes 8-byte alignment; for 128-bit, 16-byte alignment, etc.
+  localparam int A_ALIGN_LSB = (INSTR_RDATA_WIDTH <= 8) ? 0 : $clog2(INSTR_RDATA_WIDTH/8);
+  always_comb addr_a_int = {addr_a_i[ADDR_WIDTH-1:A_ALIGN_LSB], {A_ALIGN_LSB{1'b0}}};
   always_comb addr_b_int = {addr_b_i[ADDR_WIDTH-1:2], 2'b0};
 
   always @(posedge clk_i) begin

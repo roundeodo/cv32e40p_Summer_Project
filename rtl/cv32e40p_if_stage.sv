@@ -54,7 +54,7 @@ module cv32e40p_if_stage #(
     output logic [31:0] instr_addr_o,
     input logic instr_gnt_i,
     input logic instr_rvalid_i,
-    input logic [31:0] instr_rdata_i,
+    input logic [63:0] instr_rdata_i,
     input logic instr_err_i,      // External bus error (validity defined by instr_rvalid_i) (not used yet)
     input logic instr_err_pmp_i,  // PMP error (validity defined by instr_gnt_i)
 
@@ -65,8 +65,14 @@ module cv32e40p_if_stage #(
     output logic illegal_c_insn_id_o,  // compressed decoder thinks this is an invalid instruction
     output logic [31:0] pc_if_o,
     output logic [31:0] pc_id_o,
+    // slot1: extra outputs to ID
+    output logic        instr_valid1_id_o,
+    output logic [31:0] instr_rdata1_id_o,
+    output logic        is_compressed1_id_o,
+    output logic        illegal_c_insn1_id_o,
+    output logic [31:0] pc1_if_o,
+    output logic [31:0] pc1_id_o,
     output logic is_fetch_failed_o,
-
     // Forwarding ports - control signals
     input logic clear_instr_valid_i,  // clear instruction valid bit in IF/ID pipe
     input logic pc_set_i,  // set the program counter to a new value
@@ -92,6 +98,8 @@ module cv32e40p_if_stage #(
 
     // pipeline stall
     input logic halt_if_i,
+  // one-cycle soft stall to serialize dual-slot consumption in ID
+  input logic halt_if_temp_i,
     input logic id_ready_i,
 
     // misc signals
@@ -110,7 +118,7 @@ module cv32e40p_if_stage #(
 
   logic        fetch_valid;
   logic        fetch_ready;
-  logic [31:0] fetch_rdata;
+  logic [63:0] fetch_rdata;
 
   logic [31:0] exc_pc;
 
@@ -120,11 +128,17 @@ module cv32e40p_if_stage #(
 
   logic        aligner_ready;
   logic        instr_valid;
+  logic        instr_valid_1;
 
   logic        illegal_c_insn;
   logic [31:0] instr_aligned;
+  logic [31:0] instr_aligned_1;
   logic [31:0] instr_decompressed;
   logic        instr_compressed_int;
+  logic [31:0] instr_decompressed_1;
+  logic        instr_compressed_int_1;
+  logic        illegal_c_insn_1;
+
 
 
   // exception PC selection mux
@@ -223,6 +237,7 @@ module cv32e40p_if_stage #(
     end
   end
 
+
   assign if_busy_o    = prefetch_busy;
   assign perf_imiss_o = !fetch_valid && !branch_req;
 
@@ -235,24 +250,52 @@ module cv32e40p_if_stage #(
       pc_id_o             <= '0;
       is_compressed_id_o  <= 1'b0;
       illegal_c_insn_id_o <= 1'b0;
-    end else begin
+      // slot1 reset
+      instr_valid1_id_o    <= 1'b0;
+      instr_rdata1_id_o    <= '0;
+      pc1_id_o             <= '0;
+      is_compressed1_id_o  <= 1'b0;
+      illegal_c_insn1_id_o <= 1'b0;
+    end 
+    
+    else begin
+      // This must have higher priority than sampling new instructions.
+        if (if_valid) begin
+          instr_valid_id_o    <= instr_valid;
+          instr_rdata_id_o    <= instr_decompressed;
+          is_compressed_id_o  <= instr_compressed_int;
+          illegal_c_insn_id_o <= illegal_c_insn;
+          is_fetch_failed_o   <= 1'b0;
+          pc_id_o             <= pc_if_o;
+        end 
 
-      if (if_valid && instr_valid) begin
-        instr_valid_id_o    <= 1'b1;
-        instr_rdata_id_o    <= instr_decompressed;
-        is_compressed_id_o  <= instr_compressed_int;
-        illegal_c_insn_id_o <= illegal_c_insn;
-        is_fetch_failed_o   <= 1'b0;
-        pc_id_o             <= pc_if_o;
-      end else if (clear_instr_valid_i) begin
-        instr_valid_id_o  <= 1'b0;
-        is_fetch_failed_o <= fetch_failed;
-      end
+        // Clear IF/ID only when a hard IF halt is asserted in this cycle
+        else if (clear_instr_valid_i && halt_if_i) begin
+          instr_valid_id_o  <= 1'b0;
+          is_fetch_failed_o <= fetch_failed;
+        end
+
+        // slot1 pipeline
+        if (if_valid) begin
+          instr_valid1_id_o    <= instr_valid_1;
+          instr_rdata1_id_o    <= instr_decompressed_1;
+          is_compressed1_id_o  <= instr_compressed_int_1;
+          illegal_c_insn1_id_o <= illegal_c_insn_1;
+          pc1_id_o             <= pc1_if_o;
+        end 
+
+        // Clear IF/ID slot1 only when a hard IF halt is asserted in this cycle
+        else if (clear_instr_valid_i && halt_if_i) begin
+          instr_valid1_id_o <= 1'b0;
+        end
+
     end
   end
 
   assign if_ready = fetch_valid & id_ready_i;
-  assign if_valid = (~halt_if_i) & if_ready;
+  // Freeze IF whenever either hard stall (halt_if_i) or soft stall (halt_if_temp_i) is asserted.
+  // Soft stall is used by ID to consume slot1 in the next cycle while keeping IF/ID valids.
+  assign if_valid = (~halt_if_i) & (~halt_if_temp_i) & if_ready;
 
   cv32e40p_aligner aligner_i (
       .clk             (clk),
@@ -260,14 +303,17 @@ module cv32e40p_if_stage #(
       .fetch_valid_i   (fetch_valid),
       .aligner_ready_o (aligner_ready),
       .if_valid_i      (if_valid),
-      .fetch_rdata_i   (fetch_rdata),
-      .instr_aligned_o (instr_aligned),
+       .fetch_rdata_i   (fetch_rdata),
+      .instr_aligned_o (instr_aligned),//原来的slot0端口
       .instr_valid_o   (instr_valid),
+      .instr_aligned_1_o(instr_aligned_1),//slot1端口
+      .instr_valid_1_o  (instr_valid_1),
       .branch_addr_i   ({branch_addr_n[31:1], 1'b0}),
       .branch_i        (branch_req),
       .hwlp_addr_i     (hwlp_target_i),
       .hwlp_update_pc_i(hwlp_jump_i),
-      .pc_o            (pc_if_o)
+      .pc_o            (pc_if_o),
+      .pc_1_o          (pc1_if_o)
   );
 
   cv32e40p_compressed_decoder #(
@@ -278,6 +324,17 @@ module cv32e40p_if_stage #(
       .instr_o        (instr_decompressed),
       .is_compressed_o(instr_compressed_int),
       .illegal_instr_o(illegal_c_insn)
+  );
+
+  // slot1 compressed decoder
+  cv32e40p_compressed_decoder #(
+    .FPU  (FPU),
+    .ZFINX(ZFINX)
+  ) compressed_decoder_1_i (
+    .instr_i        (instr_aligned_1),
+    .instr_o        (instr_decompressed_1),
+    .is_compressed_o(instr_compressed_int_1),
+    .illegal_instr_o(illegal_c_insn_1)
   );
 
   //----------------------------------------------------------------------------

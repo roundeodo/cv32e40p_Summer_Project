@@ -12,7 +12,7 @@
 // Contributor: Robert Balas <balasr@student.ethz.ch>
 
 module cv32e40p_tb_subsystem #(
-    parameter INSTR_RDATA_WIDTH = 32,
+    parameter INSTR_RDATA_WIDTH = 64,  //改成了64bit
     parameter RAM_ADDR_WIDTH = 20,
     parameter BOOT_ADDR = 'h180,
     parameter COREV_PULP = 0,

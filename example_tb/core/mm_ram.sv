@@ -620,7 +620,9 @@ module mm_ram #(
   assign irq_fast_o     = irq_rnd_lines.irq_fast;
 
 
-  riscv_rvalid_stall instr_rvalid_stall_i (
+  riscv_rvalid_stall #(
+      .DATA_WIDTH(INSTR_RDATA_WIDTH)
+  ) instr_rvalid_stall_i (
       .clk_i        (clk_i),
       .rst_ni       (rst_ni),
       .req_i        (instr_req_i),

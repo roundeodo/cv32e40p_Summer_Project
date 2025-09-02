@@ -38,15 +38,16 @@ module cv32e40p_prefetch_buffer #(
     input logic        hwlp_jump_i,
     input logic [31:0] hwlp_target_i,
 
-    input  logic        fetch_ready_i,
-    output logic        fetch_valid_o,
-    output logic [31:0] fetch_rdata_o,
+  input  logic        fetch_ready_i,
+  output logic        fetch_valid_o,
+  output logic [63:0] fetch_rdata_o,
 
-    // goes to instruction memory / instruction cache
+  // goes to instruction memory / instruction cache
     output logic        instr_req_o,
     input  logic        instr_gnt_i,
     output logic [31:0] instr_addr_o,
-    input  logic [31:0] instr_rdata_i,
+  // 64-bit instruction read data beat from memory/ICache
+  input  logic [63:0] instr_rdata_i,
     input  logic        instr_rvalid_i,
     input  logic        instr_err_i,  // Not used yet (future addition)
     input  logic        instr_err_pmp_i,  // Not used yet (future addition)
@@ -57,7 +58,7 @@ module cv32e40p_prefetch_buffer #(
   // FIFO_DEPTH controls also the number of outstanding memory requests
   // FIFO_DEPTH must be greater than 1 to respect assertion in prefetch controller
   // FIFO_DEPTH must be a power of 2 (because of the FIFO implementation)
-  localparam FIFO_DEPTH                     = 2; //must be greater or equal to 2 //Set at least to 3 to avoid stalls compared to the master branch
+  localparam FIFO_DEPTH                     = 8; //must be greater or equal to 2 //Set at least to 3 to avoid stalls compared to the master branch
   localparam int unsigned FIFO_ADDR_DEPTH = $clog2(FIFO_DEPTH);
 
   // Transaction request (between cv32e40p_prefetch_controller and cv32e40p_obi_interface)
@@ -69,14 +70,15 @@ module cv32e40p_prefetch_buffer #(
   logic                     fifo_flush_but_first;
   logic [FIFO_ADDR_DEPTH:0] fifo_cnt;  // fifo_cnt should count from 0 to FIFO_DEPTH!
 
-  logic [             31:0] fifo_rdata;
+  logic [             63:0] fifo_rdata;
   logic                     fifo_push;
   logic                     fifo_pop;
   logic                     fifo_empty;
 
   // Transaction response interface (between cv32e40p_obi_interface and cv32e40p_fetch_fifo)
   logic                     resp_valid;
-  logic [             31:0] resp_rdata;
+  // 64-bit response from OBI adapter
+  logic [             63:0] resp_rdata64;
   logic                     resp_err;  // Unused for now
 
   //////////////////////////////////////////////////////////////////////////////
@@ -121,9 +123,9 @@ module cv32e40p_prefetch_buffer #(
   //////////////////////////////////////////////////////////////////////////////
 
   cv32e40p_fifo #(
-      .FALL_THROUGH(1'b0),
-      .DATA_WIDTH  (32),
-      .DEPTH       (FIFO_DEPTH)
+    .FALL_THROUGH(1'b0),
+    .DATA_WIDTH  (64),
+    .DEPTH       (FIFO_DEPTH)
   ) fifo_i (
       .clk_i            (clk),
       .rst_ni           (rst_n),
@@ -133,7 +135,7 @@ module cv32e40p_prefetch_buffer #(
       .full_o           (),
       .empty_o          (fifo_empty),
       .cnt_o            (fifo_cnt),
-      .data_i           (resp_rdata),
+    .data_i           (resp_rdata64),
       .push_i           (fifo_push),
       .data_o           (fifo_rdata),
       .pop_i            (fifo_pop)
@@ -141,14 +143,15 @@ module cv32e40p_prefetch_buffer #(
 
   // First POP from the FIFO if it is not empty.
   // Otherwise, try to fall-through it.
-  assign fetch_rdata_o = fifo_empty ? resp_rdata : fifo_rdata;
+  assign fetch_rdata_o = fifo_empty ? resp_rdata64 : fifo_rdata;
 
   //////////////////////////////////////////////////////////////////////////////
   // OBI interface
   //////////////////////////////////////////////////////////////////////////////
 
   cv32e40p_obi_interface #(
-      .TRANS_STABLE(0)  // trans_* is NOT guaranteed stable during waited transfers;
+      .TRANS_STABLE(0),  // trans_* is NOT guaranteed stable during waited transfers;
+      .RDATA_WIDTH(64)
       // this is ignored for legacy PULP behavior (not compliant to OBI)
   )                                                     // Keep this parameter stuck to 0 to make HWLP work
 
@@ -159,14 +162,14 @@ module cv32e40p_prefetch_buffer #(
 
       .trans_valid_i(trans_valid),
       .trans_ready_o(trans_ready),
-      .trans_addr_i ({trans_addr[31:2], 2'b00}),
+  .trans_addr_i ({trans_addr[31:3], 3'b000}),
       .trans_we_i   (1'b0),  // Instruction interface (never write)
       .trans_be_i   (4'b1111),  // Corresponding obi_be_o not used
       .trans_wdata_i(32'b0),  // Corresponding obi_wdata_o not used
       .trans_atop_i (6'b0),  // Atomics not used on instruction bus
 
-      .resp_valid_o(resp_valid),
-      .resp_rdata_o(resp_rdata),
+  .resp_valid_o(resp_valid),
+  .resp_rdata_o(resp_rdata64),
       .resp_err_o  (resp_err),  // Unused for now
 
       .obi_req_o   (instr_req_o),
@@ -181,6 +184,7 @@ module cv32e40p_prefetch_buffer #(
       .obi_err_i   (instr_err_i)
   );
 
+  // No local 64->32拆分，这里直接以64位宽度进入FIFO与直通。
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
@@ -206,13 +210,13 @@ module cv32e40p_prefetch_buffer #(
   a_branch_halfword_aligned :
   assert property (p_branch_halfword_aligned);
 
-  // Check that bus interface transactions are word aligned
-  property p_instr_addr_word_aligned;
-    @(posedge clk) (1'b1) |-> (instr_addr_o[1:0] == 2'b00);
+  // Check that bus interface transactions are 8-byte aligned
+  property p_instr_addr_8B_aligned;
+    @(posedge clk) (1'b1) |-> (instr_addr_o[2:0] == 3'b000);
   endproperty
 
-  a_instr_addr_word_aligned :
-  assert property (p_instr_addr_word_aligned);
+  a_instr_addr_8B_aligned :
+  assert property (p_instr_addr_8B_aligned);
 
   // Check that a taken branch can only occur if fetching is requested
   property p_branch_implies_req;
@@ -245,9 +249,6 @@ module cv32e40p_prefetch_buffer #(
 
   a_no_error :
   assert property (p_no_error);
-
-
-
 
 `endif
 

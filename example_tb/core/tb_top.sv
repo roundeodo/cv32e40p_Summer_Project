@@ -14,13 +14,13 @@
 //              Jeremy Bennett <jeremy.bennett@embecosm.com>
 
 module tb_top #(
-    parameter INSTR_RDATA_WIDTH = 32,
+    parameter INSTR_RDATA_WIDTH = 64,  // 指令返回数据位宽（与RAM拍宽）；核心仍消费32位，此参数可设为32或64  //修改过
     parameter RAM_ADDR_WIDTH = 22,
     parameter BOOT_ADDR = 'h180,
-    parameter PULP_XPULP = 0,
-    parameter PULP_CLUSTER = 0,
+    parameter COREV_PULP = 1,
+    parameter COREV_CLUSTER = 1,
     parameter FPU = 0,
-    parameter ZFINX = 0,
+    parameter ZFINX = 1,
     parameter NUM_MHPMCOUNTERS = 1,
     parameter DM_HALTADDRESS = 32'h1A110800
 );
@@ -146,8 +146,8 @@ module tb_top #(
       .INSTR_RDATA_WIDTH(INSTR_RDATA_WIDTH),
       .RAM_ADDR_WIDTH   (RAM_ADDR_WIDTH),
       .BOOT_ADDR        (BOOT_ADDR),
-      .PULP_XPULP       (PULP_XPULP),
-      .PULP_CLUSTER     (PULP_CLUSTER),
+      .COREV_PULP       (COREV_PULP),
+      .COREV_CLUSTER     (COREV_CLUSTER),
       .FPU              (FPU),
       .ZFINX            (ZFINX),
       .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS),
@@ -164,8 +164,8 @@ module tb_top #(
 
 `ifndef VERILATOR
   initial begin
-    assert (INSTR_RDATA_WIDTH == 32)
-    else $fatal("invalid INSTR_RDATA_WIDTH, choose 32");
+    assert ((INSTR_RDATA_WIDTH == 32) || (INSTR_RDATA_WIDTH == 64))  //修改了以后   一次取64bit回来也能过assertion
+      else $fatal("invalid INSTR_RDATA_WIDTH, choose 32 or 64");
   end
 `endif
 

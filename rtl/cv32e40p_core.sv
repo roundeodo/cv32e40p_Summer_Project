@@ -56,9 +56,9 @@ module cv32e40p_core
     // Instruction memory interface
     output logic        instr_req_o,
     input  logic        instr_gnt_i,
-    input  logic        instr_rvalid_i,
-    output logic [31:0] instr_addr_o,
-    input  logic [31:0] instr_rdata_i,
+  input  logic        instr_rvalid_i,
+  output logic [31:0] instr_addr_o,
+  input  logic [63:0] instr_rdata_i,  //改成了64bit
 
     // Data memory interface
     output logic        data_req_o,
@@ -133,6 +133,13 @@ module cv32e40p_core
   logic        illegal_c_insn_id;
   logic        is_fetch_failed_id;
 
+  // IF/ID slot1 signals (from IF to ID)
+  logic        instr_valid1_id;
+  logic [31:0] instr_rdata1_id;
+  logic        is_compressed1_id;
+  logic        illegal_c_insn1_id;
+
+
   logic        clear_instr_valid;
   logic        pc_set;
 
@@ -146,6 +153,8 @@ module cv32e40p_core
 
   logic [31:0] pc_if;  // Program counter in IF stage
   logic [31:0] pc_id;  // Program counter in ID stage
+  logic [31:0] pc1_if; // Program counter for IF slot1
+  logic [31:0] pc1_id; // Program counter for ID slot1
 
   // ID performance counter signals
   logic        is_decoding;
@@ -272,6 +281,8 @@ module cv32e40p_core
 
   // stall control
   logic               halt_if;
+  // one-shot soft stall from ID to IF
+  logic               halt_if_temp;
   logic               id_ready;
   logic               ex_ready;
 
@@ -450,7 +461,7 @@ module cv32e40p_core
       .instr_addr_o   (instr_addr_pmp),
       .instr_gnt_i    (instr_gnt_pmp),
       .instr_rvalid_i (instr_rvalid_i),
-      .instr_rdata_i  (instr_rdata_i),
+      .instr_rdata_i  (instr_rdata_i),              //没有改动？？
       .instr_err_i    (1'b0),  // Bus error (not used yet)
       .instr_err_pmp_i(instr_err_pmp),  // PMP error
 
@@ -458,6 +469,10 @@ module cv32e40p_core
       .instr_valid_id_o (instr_valid_id),
       .instr_rdata_id_o (instr_rdata_id),
       .is_fetch_failed_o(is_fetch_failed_id),
+
+      // slot1 outputs to ID
+      .instr_valid1_id_o  (instr_valid1_id),
+      .instr_rdata1_id_o  (instr_rdata1_id),
 
       // control signals
       .clear_instr_valid_i(clear_instr_valid),
@@ -474,9 +489,14 @@ module cv32e40p_core
 
       .pc_id_o(pc_id),
       .pc_if_o(pc_if),
+      .pc1_if_o           (pc1_if),
+      .pc1_id_o           (pc1_id),
 
       .is_compressed_id_o (is_compressed_id),
       .illegal_c_insn_id_o(illegal_c_insn_id),
+
+      .is_compressed1_id_o(is_compressed1_id),
+      .illegal_c_insn1_id_o(illegal_c_insn1_id),
 
       .m_exc_vec_pc_mux_i(m_exc_vec_pc_mux_id),
       .u_exc_vec_pc_mux_i(u_exc_vec_pc_mux_id),
@@ -493,7 +513,9 @@ module cv32e40p_core
       .jump_target_ex_i(jump_target_ex),
 
       // pipeline stalls
-      .halt_if_i (halt_if),
+  .halt_if_i (halt_if),
+  // one-shot soft stall from ID
+  .halt_if_temp_i(halt_if_temp),
       .id_ready_i(id_ready),
 
       .if_busy_o   (if_busy),
@@ -541,6 +563,9 @@ module cv32e40p_core
       // Interface to instruction memory
       .instr_valid_i(instr_valid_id),
       .instr_rdata_i(instr_rdata_id),
+      // slot1 inputs from IF
+      .instr_valid1_i(instr_valid1_id),
+      .instr_rdata1_i(instr_rdata1_id),
       .instr_req_o  (instr_req_int),
 
       // Jumps and branches
@@ -560,12 +585,17 @@ module cv32e40p_core
       .is_fetch_failed_i(is_fetch_failed_id),
 
       .pc_id_i(pc_id),
+      .pc1_id_i(pc1_id),
 
       .is_compressed_i (is_compressed_id),
       .illegal_c_insn_i(illegal_c_insn_id),
 
+      .is_compressed1_i(is_compressed1_id),
+      .illegal_c_insn1_i(illegal_c_insn1_id),
+
       // Stalls
       .halt_if_o(halt_if),
+  .halt_if_temp_o(halt_if_temp),
 
       .id_ready_o(id_ready),
       .ex_ready_i(ex_ready),
