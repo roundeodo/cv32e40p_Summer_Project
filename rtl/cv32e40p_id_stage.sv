@@ -2456,9 +2456,9 @@ module cv32e40p_id_stage
   // ALU_Op_a Mux
   always_comb begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
-      OP_A_REGA_OR_FWD: alu_operand_a = operand_a_fw_id;        // 0
-      OP_A_REGB_OR_FWD: alu_operand_a = operand_b_fw_id;    // 11 
-      OP_A_REGC_OR_FWD: alu_operand_a = operand_c_fw_id;
+      OP_A_REGA_OR_FWD: alu_operand_a = regfile_data_ra_id;        // 0
+      OP_A_REGB_OR_FWD: alu_operand_a = regfile_data_rb_id;    // 11 
+      OP_A_REGC_OR_FWD: alu_operand_a = regfile_data_rc_id;
       OP_A_CURRPC:      alu_operand_a = pc_id_i;        //1
       OP_A_IMM:         alu_operand_a = imm_a;
       default:          alu_operand_a = operand_a_fw_id;
@@ -2514,9 +2514,9 @@ module cv32e40p_id_stage
   // ALU_Op_b Mux
   always_comb begin : alu_operand_b_mux
     case (alu_op_b_mux_sel)
-      OP_B_REGA_OR_FWD: operand_b = operand_a_fw_id;
-      OP_B_REGB_OR_FWD: operand_b = operand_b_fw_id;
-      OP_B_REGC_OR_FWD: operand_b = operand_c_fw_id;
+      OP_B_REGA_OR_FWD: operand_b = regfile_data_ra_id;
+      OP_B_REGB_OR_FWD: operand_b = regfile_data_rb_id;
+      OP_B_REGC_OR_FWD: operand_b = regfile_data_rc_id;
       OP_B_IMM:         operand_b = imm_b;
       OP_B_BMASK:       operand_b = $unsigned(operand_b_fw_id[4:0]);
       default:          operand_b = operand_b_fw_id;
@@ -2563,8 +2563,8 @@ module cv32e40p_id_stage
   // ALU OP C Mux
   always_comb begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
-      OP_C_REGC_OR_FWD: operand_c = operand_c_fw_id;
-      OP_C_REGB_OR_FWD: operand_c = operand_b_fw_id;
+      OP_C_REGC_OR_FWD: operand_c = regfile_data_rc_id;
+      OP_C_REGB_OR_FWD: operand_c = regfile_data_rb_id;
       OP_C_JT:          operand_c = jump_target;
       default:          operand_c = operand_c_fw_id;
     endcase  // case (alu_op_c_mux_sel)
