@@ -2073,6 +2073,12 @@ module cv32e40p_id_stage
     input logic        regfile_alu_we_fw_power_i,
     input logic [31:0] regfile_alu_wdata_fw_i,
 
+    output logic        [       1:0] operand_a_fw_mux_sel_o,
+    output logic        [       1:0] operand_b_fw_mux_sel_o,
+    output logic        [       1:0] operand_c_fw_mux_sel_o,    
+    output logic        [       2:0] alu_op_a_mux_sel_o,
+    output logic        [       2:0] alu_op_b_mux_sel_o,
+    output logic        [       1:0] alu_op_c_mux_sel_o,
     // from ALU
     input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
 
@@ -2135,6 +2141,10 @@ module cv32e40p_id_stage
   logic        regb_used_dec;
   logic        regc_used_dec;
 
+  logic        rega_used_dec_q;
+  logic        regb_used_dec_q;
+  logic        regc_used_dec_q;
+
   logic        branch_taken_ex;
   logic [ 1:0] ctrl_transfer_insn_in_id;
   logic [ 1:0] ctrl_transfer_insn_in_dec;
@@ -2182,6 +2192,10 @@ module cv32e40p_id_stage
   logic [ 5:0] regfile_addr_ra_id;
   logic [ 5:0] regfile_addr_rb_id;
   logic [ 5:0] regfile_addr_rc_id;
+
+  logic [ 5:0] regfile_addr_ra_id_q;
+  logic [ 5:0] regfile_addr_rb_id_q;
+  logic [ 5:0] regfile_addr_rc_id_q;
 
   logic        regfile_fp_a;
   logic        regfile_fp_b;
@@ -2386,15 +2400,15 @@ module cv32e40p_id_stage
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ? regfile_waddr_id : regfile_addr_ra_id;
 
   // Forwarding control signals
-  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o_q     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o_q     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o_q     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
-  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
-  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-  assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o_q     == regfile_addr_ra_id_q) && (rega_used_dec_q == 1'b1) && (regfile_addr_ra_id_q != '0);
+  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o_q     == regfile_addr_rb_id_q) && (regb_used_dec_q == 1'b1) && (regfile_addr_rb_id_q != '0);
+  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o_q     == regfile_addr_rc_id_q) && (regc_used_dec_q == 1'b1) && (regfile_addr_rc_id_q != '0);
+  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id_q) && (rega_used_dec_q == 1'b1) && (regfile_addr_ra_id_q != '0);
+  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id_q) && (regb_used_dec_q == 1'b1) && (regfile_addr_rb_id_q != '0);
+  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == regfile_addr_rc_id_q) && (regc_used_dec_q == 1'b1) && (regfile_addr_rc_id_q != '0);
+  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id_q) && (rega_used_dec_q == 1'b1) && (regfile_addr_ra_id_q != '0);
+  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id_q) && (regb_used_dec_q == 1'b1) && (regfile_addr_rb_id_q != '0);
+  assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == regfile_addr_rc_id_q) && (regc_used_dec_q == 1'b1) && (regfile_addr_rc_id_q != '0);
 
 
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
@@ -2442,10 +2456,10 @@ module cv32e40p_id_stage
   // ALU_Op_a Mux
   always_comb begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
-      OP_A_REGA_OR_FWD: alu_operand_a = operand_a_fw_id;
-      OP_A_REGB_OR_FWD: alu_operand_a = operand_b_fw_id;
+      OP_A_REGA_OR_FWD: alu_operand_a = operand_a_fw_id;        // 0
+      OP_A_REGB_OR_FWD: alu_operand_a = operand_b_fw_id;    // 11 
       OP_A_REGC_OR_FWD: alu_operand_a = operand_c_fw_id;
-      OP_A_CURRPC:      alu_operand_a = pc_id_i;
+      OP_A_CURRPC:      alu_operand_a = pc_id_i;        //1
       OP_A_IMM:         alu_operand_a = imm_a;
       default:          alu_operand_a = operand_a_fw_id;
     endcase
@@ -2462,9 +2476,9 @@ module cv32e40p_id_stage
   // Operand a forwarding mux
   always_comb begin : operand_a_fw_mux
     case (operand_a_fw_mux_sel)
-      SEL_FW_EX:   operand_a_fw_id = regfile_alu_wdata_fw_i;
-      SEL_FW_WB:   operand_a_fw_id = regfile_wdata_wb_i;
-      SEL_REGFILE: operand_a_fw_id = regfile_data_ra_id;
+      SEL_FW_EX:   operand_a_fw_id = regfile_alu_wdata_fw_i;      //1
+      SEL_FW_WB:   operand_a_fw_id = regfile_wdata_wb_i;        //2
+      SEL_REGFILE: operand_a_fw_id = regfile_data_ra_id;        //0
       default:     operand_a_fw_id = regfile_data_ra_id;
     endcase
     ;  // case (operand_a_fw_mux_sel)
@@ -3278,7 +3292,20 @@ module cv32e40p_id_stage
         apu_lat_ex_o_q <= '0;
         data_req_ex_o_q          <= '0;
         data_we_ex_o_q           <= '0;
-    end else begin
+        rega_used_dec_q <= 1'b0;
+        regb_used_dec_q <= 1'b0;
+        regc_used_dec_q <= 1'b0;
+        regfile_addr_ra_id_q <= 6'b0;
+        regfile_addr_rb_id_q <= 6'b0;
+        regfile_addr_rc_id_q <= 6'b0;
+        // operand_a_fw_mux_sel_o <= 2'b0;
+        // operand_b_fw_mux_sel_o <= 2'b0;
+        // operand_c_fw_mux_sel_o <= 2'b0;
+        alu_op_a_mux_sel_o <= 3'b0;
+        alu_op_b_mux_sel_o <= 3'b0;
+        alu_op_c_mux_sel_o <= 2'b0;        
+
+    end else if (id_valid_o) begin
         regfile_we_ex_o_q <= regfile_we_ex_o;
         regfile_waddr_ex_o_q <= regfile_waddr_ex_o;
         branch_in_ex_o_q <= branch_in_ex_o;
@@ -3286,8 +3313,24 @@ module cv32e40p_id_stage
         apu_lat_ex_o_q <= apu_lat_ex_o;
         data_req_ex_o_q          <= data_req_ex_o;
         data_we_ex_o_q           <= data_we_ex_o;
+        rega_used_dec_q <= rega_used_dec;
+        regb_used_dec_q <= regb_used_dec;
+        regc_used_dec_q <= regc_used_dec;
+        regfile_addr_ra_id_q <= regfile_addr_ra_id;
+        regfile_addr_rb_id_q <= regfile_addr_rb_id;
+        regfile_addr_rc_id_q <= regfile_addr_rc_id;
+
+        // operand_a_fw_mux_sel_o <= operand_a_fw_mux_sel;
+        // operand_b_fw_mux_sel_o <= operand_b_fw_mux_sel;
+        // operand_c_fw_mux_sel_o <= operand_c_fw_mux_sel;
+        alu_op_a_mux_sel_o <= alu_op_a_mux_sel;
+        alu_op_b_mux_sel_o <= alu_op_b_mux_sel;
+        alu_op_c_mux_sel_o <= alu_op_c_mux_sel;
     end
   end
+  assign  operand_a_fw_mux_sel_o = operand_a_fw_mux_sel;
+  assign  operand_b_fw_mux_sel_o = operand_b_fw_mux_sel;
+  assign  operand_c_fw_mux_sel_o = operand_c_fw_mux_sel;
   always_ff @(posedge clk, negedge rst_n) begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0) begin
       alu_en_ex_o            <= '0;
@@ -3329,16 +3372,11 @@ module cv32e40p_id_stage
       apu_flags_ex_o         <= '0;
       apu_waddr_ex_o         <= '0;
 
-      // apu_en_ex_o_q            <= '0;
-      // apu_lat_ex_o_q           <= '0;
-
 
 
       regfile_waddr_ex_o     <= 6'b0;
       regfile_we_ex_o        <= 1'b0;
 
-      // regfile_waddr_ex_o_q     <= 6'b0;
-      // regfile_we_ex_o_q        <= 1'b0;
 
       regfile_alu_waddr_ex_o <= 6'b0;
       regfile_alu_we_ex_o    <= 1'b0;
@@ -3355,15 +3393,13 @@ module cv32e40p_id_stage
       data_load_event_ex_o   <= 1'b0;
       atop_ex_o              <= 5'b0;
 
-      // data_req_ex_o_q          <= 1'b0;
-      // data_we_ex_o_q           <= 1'b0;
 
       data_misaligned_ex_o   <= 1'b0;
 
       pc_ex_o                <= '0;
 
       branch_in_ex_o         <= 1'b0;
-      // branch_in_ex_o_q         <= 1'b0;
+
 
     end else if (data_misaligned_i) begin
       // misaligned data access case
@@ -3389,13 +3425,6 @@ module cv32e40p_id_stage
 
       if (id_valid_o) begin  // unstall the whole pipeline
         alu_en_ex_o <= alu_en;
-        // regfile_we_ex_o_q <= regfile_we_ex_o;
-        // regfile_waddr_ex_o_q <= regfile_waddr_ex_o;
-        // branch_in_ex_o_q <= branch_in_ex_o;
-        // apu_en_ex_o_q <= apu_en_ex_o;
-        // apu_lat_ex_o_q <= apu_lat_ex_o;
-        // data_req_ex_o_q          <= data_req_ex_o;
-        // data_we_ex_o_q           <= data_we_ex_o;
         if (alu_en) begin
           alu_operator_ex_o  <= alu_operator;
           alu_operand_a_ex_o <= alu_operand_a;

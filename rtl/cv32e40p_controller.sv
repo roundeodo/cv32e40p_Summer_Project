@@ -357,7 +357,7 @@ module cv32e40p_controller import cv32e40p_pkg::*;
       WAIT_SLEEP:
       begin
         is_decoding_o = 1'b0;
-        ctrl_busy_o   = 1'b0;
+        ctrl_busy_o   = 1'b0;       //to sleep unit
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
         halt_id_o     = 1'b1;

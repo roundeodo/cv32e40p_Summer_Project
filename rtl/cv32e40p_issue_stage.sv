@@ -35,6 +35,7 @@ module cv32e40p_issue_stage
 ) (
     input  logic clk,
     input  logic rst_n,
+    input logic ex_ready_i, // from EX stage, to all ID/EX flops
 
     // ---------------- General / IF-Interface / Decode state ----------------
     input  logic        ctrl_busy_i,    //from ID stage, to sleep unit, not sure wether flop
@@ -71,6 +72,18 @@ module cv32e40p_issue_stage
     input  logic [ 4:0] bmask_b_ex_i,
     input  logic [ 1:0] imm_vec_ext_ex_i,
     input  logic [ 1:0] alu_vec_mode_ex_i,
+
+    //input for operand forwarding
+    // Forwarding
+    input  logic        [       1:0] operand_a_fw_mux_sel_i,
+    input  logic        [       1:0] operand_b_fw_mux_sel_i,
+    input  logic        [       1:0] operand_c_fw_mux_sel_i,
+    input  logic        [       2:0] alu_op_a_mux_sel_i,
+    input  logic        [       2:0] alu_op_b_mux_sel_i,
+    input  logic        [       1:0] alu_op_c_mux_sel_i,
+    input  logic [31:0] regfile_alu_wdata_fw_i,
+    input  logic [31:0] regfile_wdata_wb_i,
+
 
     input  logic [5:0] regfile_waddr_ex_i,
     input  logic       regfile_we_ex_i,
@@ -186,6 +199,7 @@ module cv32e40p_issue_stage
     input logic [31:0] pc_if_i,
     input logic [31:0] pc_id_i,
     input logic csr_mtvec_init_i, // to CSR, flopped
+
 
     // ------------------------------- Outputs -------------------------------
     output logic        ctrl_busy_o,
@@ -324,6 +338,93 @@ module cv32e40p_issue_stage
     output logic csr_mtvec_init_o // to CSR, flopped
 );
 
+    logic [31:0] alu_operand_a;
+    logic [31:0] alu_operand_b;
+    logic [31:0] alu_operand_c;
+  ////////////////////////////////////////////////////////
+  //   ___                                 _      _     //
+  //  / _ \ _ __   ___ _ __ __ _ _ __   __| |    / \    //
+  // | | | | '_ \ / _ \ '__/ _` | '_ \ / _` |   / _ \   //
+  // | |_| | |_) |  __/ | | (_| | | | | (_| |  / ___ \  //
+  //  \___/| .__/ \___|_|  \__,_|_| |_|\__,_| /_/   \_\ //
+  //       |_|                                          //
+  ////////////////////////////////////////////////////////
+
+  // // ALU_Op_a Mux
+  // always_comb begin : alu_operand_a_mux_is
+  //   case (alu_op_a_mux_sel_i)
+  //     OP_A_REGA_OR_FWD: alu_operand_a = operand_a_fw_id;        // 0
+  //     OP_A_REGB_OR_FWD: alu_operand_a = operand_b_fw_id;    // 11 
+  //     OP_A_REGC_OR_FWD: alu_operand_a = operand_c_fw_id;
+  //     OP_A_CURRPC:      alu_operand_a = alu_operand_a_ex_i;        //1
+  //     OP_A_IMM:         alu_operand_a = alu_operand_a_ex_i;
+  //     default:          alu_operand_a = operand_a_fw_id;
+  //   endcase
+  //   ;  // case (alu_op_a_mux_sel)
+  // end
+
+  // // Operand a forwarding mux
+  // always_comb begin : operand_a_fw_mux_is
+  //   case (operand_a_fw_mux_sel_i)
+  //     SEL_FW_EX:   operand_a_fw_id = regfile_alu_wdata_fw_i;      //1
+  //     SEL_FW_WB:   operand_a_fw_id = regfile_wdata_wb_i;        //2
+  //     SEL_REGFILE: operand_a_fw_id = alu_operand_a_ex_i;        //0
+  //     default:     operand_a_fw_id = alu_operand_a_ex_i;
+  //   endcase
+  //   ;  // case (operand_a_fw_mux_sel_i)
+  // end
+
+always_comb begin : alu_operand_a_mux_is
+  casez ({alu_op_a_mux_sel_i, operand_a_fw_mux_sel_i})
+    // ---- 只关心 alu_op_a_mux_sel 的情况 ----
+    {OP_A_CURRPC,   2'b??}: alu_operand_a = alu_operand_a_ex_i;
+    {OP_A_IMM,      2'b??}: alu_operand_a = alu_operand_a_ex_i;
+
+    // ---- 只关心 operand_a_fw_mux_sel 的情况 ----
+    {3'b???, SEL_REGFILE}: alu_operand_a = alu_operand_a_ex_i;
+
+    // ---- 需要同时关心两个信号的情况 ----
+    {OP_A_REGA_OR_FWD, SEL_FW_EX}: alu_operand_a = regfile_alu_wdata_fw_i;
+    {OP_A_REGA_OR_FWD, SEL_FW_WB}: alu_operand_a = regfile_wdata_wb_i;
+    {OP_A_REGB_OR_FWD, SEL_FW_EX}: alu_operand_a = regfile_alu_wdata_fw_i;
+    {OP_A_REGB_OR_FWD, SEL_FW_WB}: alu_operand_a = regfile_wdata_wb_i;
+    {OP_A_REGC_OR_FWD, SEL_FW_EX}: alu_operand_a = regfile_alu_wdata_fw_i;
+    {OP_A_REGC_OR_FWD, SEL_FW_WB}: alu_operand_a = regfile_wdata_wb_i;
+
+    // ---- 默认情况 ----
+    default: alu_operand_a = alu_operand_a_ex_i;
+  endcase
+end
+
+
+
+
+  //////////////////////////////////////////////////////
+  //   ___                                 _   ____   //
+  //  / _ \ _ __   ___ _ __ __ _ _ __   __| | | __ )  //
+  // | | | | '_ \ / _ \ '__/ _` | '_ \ / _` | |  _ \  //
+  // | |_| | |_) |  __/ | | (_| | | | | (_| | | |_) | //
+  //  \___/| .__/ \___|_|  \__,_|_| |_|\__,_| |____/  //
+  //       |_|                                        //
+  //////////////////////////////////////////////////////
+
+  //   // ALU_Op_b Mux
+  // always_comb begin : alu_operand_b_mux
+  //   case (alu_op_b_mux_sel)
+  //     OP_B_REGA_OR_FWD: operand_b = operand_a_fw_id;
+  //     OP_B_REGB_OR_FWD: operand_b = operand_b_fw_id;
+  //     OP_B_REGC_OR_FWD: operand_b = operand_c_fw_id;
+  //     OP_B_IMM:         operand_b = alu_operand_b_ex_i;
+  //     OP_B_BMASK:       operand_b = $unsigned(operand_b_fw_id[4:0]);
+  //     default:          operand_b = operand_b_fw_id;
+  //   endcase  // case (alu_op_b_mux_sel)
+  // end
+
+
+
+
+
+
   // 同步寄存(registered on clock), 异步低复位(active-low async reset)
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -461,6 +562,10 @@ module cv32e40p_issue_stage
       mhpmevent_pipe_stall_o        <= '0;
 
     end else begin
+    //   if (csr_access_ex_o) begin
+    //   regfile_alu_we_ex_o <= 1'b0;
+    // end
+    // if (id_valid_i)begin
       // General / IF / decode
       ctrl_busy_o                   <= ctrl_busy_i;
       is_decoding_o                 <= is_decoding_i;
@@ -486,7 +591,7 @@ module cv32e40p_issue_stage
       csr_mtvec_init_o             <= csr_mtvec_init_i;
 
 
-      alu_operand_a_ex_o            <= alu_operand_a_ex_i;
+      alu_operand_a_ex_o            <= alu_operand_a;
       alu_operand_b_ex_o            <= alu_operand_b_ex_i;
       alu_operand_c_ex_o            <= alu_operand_c_ex_i;
       bmask_a_ex_o                  <= bmask_a_ex_i;
@@ -594,7 +699,34 @@ module cv32e40p_issue_stage
       mhpmevent_imiss_o             <= mhpmevent_imiss_i;
       mhpmevent_ld_stall_o          <= mhpmevent_ld_stall_i;
       mhpmevent_pipe_stall_o        <= mhpmevent_pipe_stall_i;
-    end
+    // end
+    // else if (!ex_ready_i) begin
+    //           regfile_we_ex_o      <= 1'b0;
+
+    //     regfile_alu_we_ex_o  <= 1'b0;
+
+    //     csr_op_ex_o          <= CSR_OP_READ;
+
+    //     data_req_ex_o        <= 1'b0;
+
+    //     data_load_event_ex_o <= 1'b0;
+
+    //     data_misaligned_ex_o <= 1'b0;
+
+    //     branch_in_ex_o       <= 1'b0;
+
+    //     apu_en_ex_o          <= 1'b0;
+
+    //     alu_operator_ex_o    <= ALU_SLTU;
+
+    //     mult_en_ex_o         <= 1'b0;
+
+    //     alu_en_ex_o          <= 1'b1;
+    // end
+    // else if (csr_access_ex_o) begin
+    //   regfile_alu_we_ex_o <= 1'b0;
+    // end
+  end
   end
 
 endmodule

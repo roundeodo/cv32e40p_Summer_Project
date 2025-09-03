@@ -142,6 +142,9 @@ module cv32e40p_core
   logic [ 4:0] u_exc_vec_pc_mux_id;  // Mux selector for vectored IRQ PC
   logic [ 4:0] exc_cause;
 
+  logic [ 3:0] pc_mux_id_is;  // Mux selector for next PC
+  logic [ 2:0] exc_pc_mux_id_is;  // Mux selector for exception PC
+
   logic [ 1:0] trap_addr_mux;
 
   logic [31:0] pc_if;  // Program counter in IF stage
@@ -152,6 +155,7 @@ module cv32e40p_core
 
   // ID performance counter signals
   logic        is_decoding;
+  logic        is_decoding_is;
 
   logic        useincr_addr_ex;  // Active when post increment
   logic        useincr_addr_ex_is;  // Active when post increment (flopped)
@@ -568,7 +572,7 @@ module cv32e40p_core
       .depc_i(depc),  // debug return address
 
       .pc_mux_i    (pc_mux_id),  // sel for pc multiplexer
-      .exc_pc_mux_i(exc_pc_mux_id),
+      .exc_pc_mux_i(exc_pc_mux_id_is),
 
 
       .pc_id_o(pc_id),
@@ -599,6 +603,12 @@ module cv32e40p_core
       .perf_imiss_o(perf_imiss)
   );
 
+logic        [       1:0] operand_a_fw_mux_sel;
+logic        [       1:0] operand_b_fw_mux_sel;
+logic        [       1:0] operand_c_fw_mux_sel;
+logic        [       2:0] alu_op_a_mux_sel;
+logic        [       2:0] alu_op_b_mux_sel;
+logic        [       1:0] alu_op_c_mux_sel;
 
   /////////////////////////////////////////////////
   //   ___ ____    ____ _____  _    ____ _____   //
@@ -635,7 +645,7 @@ module cv32e40p_core
       // Processor Enable
       .fetch_enable_i               ( fetch_enable         ),     // Delayed version so that clock can remain gated until fetch enabled
       .ctrl_busy_o(ctrl_busy),
-      .is_decoding_o(is_decoding),
+      .is_decoding_o(is_decoding_is),
 
       // Interface to instruction memory
       .instr_valid_i(instr_valid_id),
@@ -813,6 +823,12 @@ module cv32e40p_core
       .regfile_alu_we_fw_i      (regfile_alu_we_fw),
       .regfile_alu_we_fw_power_i(regfile_alu_we_fw_power),
       .regfile_alu_wdata_fw_i   (regfile_alu_wdata_fw),
+      .operand_a_fw_mux_sel_o (operand_a_fw_mux_sel), // 2 bit
+      .operand_b_fw_mux_sel_o (operand_b_fw_mux_sel), // 2 bit
+      .operand_c_fw_mux_sel_o (operand_c_fw_mux_sel), // 2 bit
+      .alu_op_a_mux_sel_o     (alu_op_a_mux_sel), // 3 bit
+      .alu_op_b_mux_sel_o     (alu_op_b_mux_sel), // 3 bit
+      .alu_op_c_mux_sel_o     (alu_op_c_mux_sel),  // 2 bit
 
       // from ALU
       .mult_multicycle_i(mult_multicycle),
@@ -863,10 +879,11 @@ cv32e40p_issue_stage #(
   // Clock & Reset
   .clk(clk),                               // input
   .rst_n(rst_ni),                             // input, active-low
+  .ex_ready_i(ex_ready),                        // input
 
   // General / IF / Decode
   .ctrl_busy_i(),                       // input
-  .is_decoding_i(),                     // input
+  .is_decoding_i(is_decoding_is),                     // input
   .instr_req_i(),                       // input
 
   // Branch / Jump
@@ -877,14 +894,14 @@ cv32e40p_issue_stage #(
   // PC/Trap control
   .clear_instr_valid_i(),               // input
   .pc_set_i(),                          // input
-  .pc_mux_i(),                          // input  [3:0]
-  .exc_pc_mux_i(),                      // input  [2:0]
+  .pc_mux_i(pc_mux_id),                          // input  [3:0]
+  .exc_pc_mux_i(exc_pc_mux_id),                      // input  [2:0]
   .trap_addr_mux_i(),                   // input  [1:0]
 
   // Handshake
   .halt_if_i(),                         // input
-  .id_ready_i(),                        // input
-  .id_valid_i(),                        // input
+  .id_ready_i(id_ready),                        // input
+  .id_valid_i(id_valid),                        // input
 
   // ------------------------ ID/EX bundle ------------------------
   .pc_ex_i(pc_ex_is),                           // input  [31:0]
@@ -903,6 +920,15 @@ cv32e40p_issue_stage #(
   .bmask_b_ex_i(bmask_b_ex_is),                      // input  [4:0]
   .imm_vec_ext_ex_i(imm_vec_ext_ex_is),                  // input  [1:0]
   .alu_vec_mode_ex_i(alu_vec_mode_ex_is),                 // input  [1:0]
+  .operand_a_fw_mux_sel_i (operand_a_fw_mux_sel), // 2 bit
+  .operand_b_fw_mux_sel_i (operand_b_fw_mux_sel), // 2 bit
+  .operand_c_fw_mux_sel_i (operand_c_fw_mux_sel), // 2 bit
+  .alu_op_a_mux_sel_i     (alu_op_a_mux_sel),     // 3 bit
+  .alu_op_b_mux_sel_i     (alu_op_b_mux_sel),     // 3 bit
+  .alu_op_c_mux_sel_i     (alu_op_c_mux_sel),     // 2 bit
+  .regfile_alu_wdata_fw_i   (regfile_alu_wdata_fw),
+  .regfile_wdata_wb_i   (regfile_wdata),  // write data to commit in the register file
+
 
   .regfile_waddr_ex_i(regfile_waddr_ex_is),                // input  [5:0]
   .regfile_we_ex_i(regfile_we_ex_is),                   // input
@@ -1015,7 +1041,7 @@ cv32e40p_issue_stage #(
 
   // ------------------------------ Outputs ------------------------------
   .ctrl_busy_o(),                       // output
-  .is_decoding_o(),                     // output
+  .is_decoding_o(is_decoding),                     // output
   .instr_req_o(),                       // output
 
   .branch_in_ex_o(branch_in_ex),                    // output
@@ -1024,8 +1050,8 @@ cv32e40p_issue_stage #(
 
   .clear_instr_valid_o(),               // output
   .pc_set_o(),                          // output
-  .pc_mux_o(),                          // output [3:0]
-  .exc_pc_mux_o(),                      // output [2:0]
+  .pc_mux_o(pc_mux_id_is),                          // output [3:0]
+  .exc_pc_mux_o(exc_pc_mux_id_is),                      // output [2:0]
   .trap_addr_mux_o(),                   // output [1:0]
 
   .halt_if_o(),                         // output
