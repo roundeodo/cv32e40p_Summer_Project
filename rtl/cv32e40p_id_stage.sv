@@ -2073,12 +2073,18 @@ module cv32e40p_id_stage
     input logic        regfile_alu_we_fw_power_i,
     input logic [31:0] regfile_alu_wdata_fw_i,
 
+
+    //signals to IF stage to select the operand
     output logic        [       1:0] operand_a_fw_mux_sel_o,
     output logic        [       1:0] operand_b_fw_mux_sel_o,
     output logic        [       1:0] operand_c_fw_mux_sel_o,    
     output logic        [       2:0] alu_op_a_mux_sel_o,
     output logic        [       2:0] alu_op_b_mux_sel_o,
     output logic        [       1:0] alu_op_c_mux_sel_o,
+
+    output logic        [       5:0] regfile_addr_ra_id_o,
+    output logic        [       5:0] regfile_addr_rb_id_o,
+    output logic        [       5:0] regfile_addr_rc_id_o,
     // from ALU
     input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
 
@@ -2800,15 +2806,15 @@ module cv32e40p_id_stage
       .scan_cg_en_i(scan_cg_en_i),
 
       // Read port a
-      .raddr_a_i(regfile_addr_ra_id),
+      .raddr_a_i(regfile_addr_ra_id_o),
       .rdata_a_o(regfile_data_ra_id),
 
       // Read port b
-      .raddr_b_i(regfile_addr_rb_id),
+      .raddr_b_i(regfile_addr_rb_id_o),
       .rdata_b_o(regfile_data_rb_id),
 
       // Read port c
-      .raddr_c_i(regfile_addr_rc_id),
+      .raddr_c_i(regfile_addr_rc_id_o),
       .rdata_c_o(regfile_data_rc_id),
 
       // Write port a
@@ -3303,7 +3309,10 @@ module cv32e40p_id_stage
         // operand_c_fw_mux_sel_o <= 2'b0;
         alu_op_a_mux_sel_o <= 3'b0;
         alu_op_b_mux_sel_o <= 3'b0;
-        alu_op_c_mux_sel_o <= 2'b0;        
+        alu_op_c_mux_sel_o <= 2'b0;
+        regfile_addr_ra_id_o <= 6'b0;
+        regfile_addr_rb_id_o <= 6'b0;
+        regfile_addr_rc_id_o <= 6'b0;        
 
     end else if (id_valid_o) begin
         regfile_we_ex_o_q <= regfile_we_ex_o;
@@ -3326,6 +3335,9 @@ module cv32e40p_id_stage
         alu_op_a_mux_sel_o <= alu_op_a_mux_sel;
         alu_op_b_mux_sel_o <= alu_op_b_mux_sel;
         alu_op_c_mux_sel_o <= alu_op_c_mux_sel;
+        regfile_addr_ra_id_o  <= regfile_addr_ra_id;
+        regfile_addr_rb_id_o  <= regfile_addr_rb_id;
+        regfile_addr_rc_id_o  <= regfile_addr_rc_id;
     end
   end
   assign  operand_a_fw_mux_sel_o = operand_a_fw_mux_sel;

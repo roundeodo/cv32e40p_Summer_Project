@@ -36,6 +36,7 @@ module cv32e40p_issue_stage
     input  logic clk,
     input  logic rst_n,
     input logic ex_ready_i, // from EX stage, to all ID/EX flops
+    input logic scan_cg_en_i,
 
     // ---------------- General / IF-Interface / Decode state ----------------
     input  logic        ctrl_busy_i,    //from ID stage, to sleep unit, not sure wether flop
@@ -83,6 +84,9 @@ module cv32e40p_issue_stage
     input  logic        [       1:0] alu_op_c_mux_sel_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
     input  logic [31:0] regfile_wdata_wb_i,
+    input  logic [ 5:0] regfile_addr_ra_is_i,
+    input  logic [ 5:0] regfile_addr_rb_is_i,
+    input  logic [ 5:0] regfile_addr_rc_is_i,
 
 
     input  logic [5:0] regfile_waddr_ex_i,
@@ -341,6 +345,18 @@ module cv32e40p_issue_stage
     logic [31:0] alu_operand_a;
     logic [31:0] alu_operand_b;
     logic [31:0] alu_operand_c;
+
+    logic [ 5:0] regfile_addr_ra_is;
+    logic [ 5:0] regfile_addr_rb_is;
+    logic [ 5:0] regfile_addr_rc_is;
+
+    logic [31:0] regfile_data_ra_is;
+    logic [31:0] regfile_data_rb_is;
+    logic [31:0] regfile_data_rc_is;
+
+    assign regfile_addr_ra_is = regfile_addr_ra_is_i;
+    assign regfile_addr_rb_is = regfile_addr_rb_is_i;
+    assign regfile_addr_rc_is = regfile_addr_rc_is_i;
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
   //  / _ \ _ __   ___ _ __ __ _ _ __   __| |    / \    //
@@ -422,7 +438,48 @@ end
 
 
 
+  /////////////////////////////////////////////////////////
+  //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
+  // |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \/ ___|  //
+  // | |_) |  _|| |  _ | |\___ \ | | |  _| | |_) \___ \  //
+  // |  _ <| |__| |_| || | ___) || | | |___|  _ < ___) | //
+  // |_| \_\_____\____|___|____/ |_| |_____|_| \_\____/  //
+  //                                                     //
+  /////////////////////////////////////////////////////////
 
+  cv32e40p_register_file #(
+      .ADDR_WIDTH(6),
+      .DATA_WIDTH(32),
+      .FPU       (FPU),
+      .ZFINX     (ZFINX)
+  ) register_file_i (
+      .clk  (clk),
+      .rst_n(rst_n),
+
+      .scan_cg_en_i(scan_cg_en_i),
+
+      // Read port a
+      .raddr_a_i(regfile_addr_ra_is),
+      .rdata_a_o(regfile_data_ra_is),
+
+      // Read port b
+      .raddr_b_i(regfile_addr_rb_is),
+      .rdata_b_o(regfile_data_rb_is),
+
+      // Read port c
+      .raddr_c_i(regfile_addr_rc_is),
+      .rdata_c_o(regfile_data_rc_is),
+
+      // Write port a
+      .waddr_a_i(),
+      .wdata_a_i(),
+      .we_a_i   (0),
+
+      // Write port b
+      .waddr_b_i(),
+      .wdata_b_i(),
+      .we_b_i   (0)
+  );
 
 
   // 同步寄存(registered on clock), 异步低复位(active-low async reset)

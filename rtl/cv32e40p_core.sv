@@ -610,6 +610,10 @@ logic        [       2:0] alu_op_a_mux_sel;
 logic        [       2:0] alu_op_b_mux_sel;
 logic        [       1:0] alu_op_c_mux_sel;
 
+    logic [ 5:0] regfile_addr_ra_id;
+    logic [ 5:0] regfile_addr_rb_id;
+    logic [ 5:0] regfile_addr_rc_id;
+
   /////////////////////////////////////////////////
   //   ___ ____    ____ _____  _    ____ _____   //
   //  |_ _|  _ \  / ___|_   _|/ \  / ___| ____|  //
@@ -829,6 +833,9 @@ logic        [       1:0] alu_op_c_mux_sel;
       .alu_op_a_mux_sel_o     (alu_op_a_mux_sel), // 3 bit
       .alu_op_b_mux_sel_o     (alu_op_b_mux_sel), // 3 bit
       .alu_op_c_mux_sel_o     (alu_op_c_mux_sel),  // 2 bit
+      .regfile_addr_ra_id_o   (regfile_addr_ra_id),
+      .regfile_addr_rb_id_o   (regfile_addr_rb_id),
+      .regfile_addr_rc_id_o   (regfile_addr_rc_id),
 
       // from ALU
       .mult_multicycle_i(mult_multicycle),
@@ -880,6 +887,7 @@ cv32e40p_issue_stage #(
   .clk(clk),                               // input
   .rst_n(rst_ni),                             // input, active-low
   .ex_ready_i(ex_ready),                        // input
+  .scan_cg_en_i (scan_cg_en_i),
 
   // General / IF / Decode
   .ctrl_busy_i(),                       // input
@@ -928,6 +936,10 @@ cv32e40p_issue_stage #(
   .alu_op_c_mux_sel_i     (alu_op_c_mux_sel),     // 2 bit
   .regfile_alu_wdata_fw_i   (regfile_alu_wdata_fw),
   .regfile_wdata_wb_i   (regfile_wdata),  // write data to commit in the register file
+
+  .regfile_addr_ra_is_i   (regfile_addr_ra_id),
+  .regfile_addr_rb_is_i   (regfile_addr_rb_id),
+  .regfile_addr_rc_is_i   (regfile_addr_rc_id),
 
 
   .regfile_waddr_ex_i(regfile_waddr_ex_is),                // input  [5:0]
